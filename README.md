@@ -9,14 +9,15 @@ with side-by-side comparisons between indicators.
 
 ## ✨ Features
 
-*Planned (initial scaffold — nothing implemented yet):*
-
-- Choropleth map of Luxembourg at commune level (React + Leaflet)
-- Indicators: air quality, sunshine hours, population density, housing prices,
-  cost of living, employment
-- Dual-map comparison mode (indicator A vs indicator B, side by side)
-- Data ETL from data.public.lu (udata API), STATEC and MeteoLux open data
-- Deployed as a static Docker image behind Cloudflare → https://luxmap.cloudfr.net
+- Choropleth map of Luxembourg's **100 communes** (React + Leaflet, Vite + TypeScript)
+- Indicators:
+  - Population density (2017, STATEC — SDMX API)
+  - Announced housing prices, apartments & houses, €/m² (2025-26, data.public.lu)
+- Indicator switcher, quantile color scale, interactive legend
+- Hover tooltips (value + year), click on a commune for a detail panel
+- Data ETL in Python (`data/scripts/`): STATEC LUSTAT SDMX-JSON, data.public.lu
+  udata API, XLS parsing
+- Docker + nginx (port 3003), ready for Cloudflare → https://luxmap.cloudfr.net
 
 ## Data sources
 
@@ -24,13 +25,13 @@ See [docs/data-sources.md](docs/data-sources.md) for the full inventory.
 
 | Theme | Source | Status |
 |-------|--------|--------|
-| Housing prices (per commune) | data.public.lu — "Prix annoncés des logements - Par commune" | ✅ found |
-| Population density (per commune) | data.public.lu — "Densité de la population par canton et commune" | ✅ found |
-| Employment / unemployment | data.public.lu — "Population et emploi - Marché du travail - Chômage" | ✅ found |
-| Air quality | data.public.lu / Administration de l'environnement | 🔍 to explore |
-| Sunshine hours | MeteoLux open data (ASTA stations) | 🔍 to explore |
+| Housing prices (per commune) | data.public.lu — "Prix annoncés des logements - Par commune" | ✅ integrated |
+| Population density (per commune) | data.public.lu → STATEC LUSTAT (DF_X020, SDMX-JSON) | ✅ integrated |
+| Commune boundaries (GeoJSON) | data.public.lu — "Limites administratives" (limadmin.geojson) | ✅ integrated |
+| Employment / unemployment | data.public.lu — "Population et emploi - Marché du travail - Chômage" | 🔍 to integrate |
+| Air quality | data.public.lu — "Données brutes mesures qualité de l'air et trafic" | 🔍 to integrate |
+| Sunshine hours | MeteoLux open data (HVD API, ASTA stations) | 🔍 to integrate |
 | Cost of living | STATEC (CPI, national level) | 🔍 to explore |
-| Commune boundaries (GeoJSON) | data.public.lu — administrative limits | 🔍 to explore |
 
 ## Installation
 
