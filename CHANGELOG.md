@@ -2,6 +2,13 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.004-c1] — 2026-08-23
+
+### Fixed
+- Traefik routing on port 80: a router with `tls.certresolver` only matches
+  HTTPS once the certificate is issued → split into two routers
+  (`luxmap` on websecure+TLS, `luxmap-web` on web)
+
 ## [2026.08.004] — 2026-08-23
 
 ### Added
