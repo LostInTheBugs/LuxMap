@@ -9,8 +9,11 @@ docker rm -f luxmap 2>/dev/null || true
 docker run -d --name luxmap --restart unless-stopped --network traefik-public \
   -l traefik.enable=true \
   -l 'traefik.http.routers.luxmap.rule=Host(`luxmap.cloudfr.net`)' \
-  -l traefik.http.routers.luxmap.entrypoints=web,websecure \
+  -l traefik.http.routers.luxmap.entrypoints=websecure \
   -l 'traefik.http.routers.luxmap.tls.certresolver=letsencrypt' \
+  -l 'traefik.http.routers.luxmap-web.rule=Host(`luxmap.cloudfr.net`)' \
+  -l traefik.http.routers.luxmap-web.entrypoints=web \
+  -l 'traefik.http.routers.luxmap-web.service=luxmap' \
   -l 'traefik.http.services.luxmap.loadbalancer.server.port=3003' \
   luxmap
 
