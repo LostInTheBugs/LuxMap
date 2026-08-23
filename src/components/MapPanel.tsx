@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
-import type { IndicatorKey } from "../types";
+import type { IndicatorDef, IndicatorKey } from "../types";
 import { colorFor, defOf, fmt } from "../utils/scale";
 import type { SyncState } from "../App";
 
@@ -21,11 +21,12 @@ interface Props {
   geo: GeoData;
   side: string;
   active: IndicatorKey;
+  def?: IndicatorDef;
   thresholds: number[];
   selected: string | null;
   valueOf: (lau2: string) => number | undefined;
   onSelect: (lau2: string | null) => void;
-  compare: boolean;
+  syncEnabled: boolean;
   sync: SyncState | null;
   onSync: (from: string, center: L.LatLng, zoom: number) => void;
 }
@@ -79,15 +80,16 @@ export default function MapPanel({
   geo,
   side,
   active,
+  def,
   thresholds,
   selected,
   valueOf,
   onSelect,
-  compare,
+  syncEnabled,
   sync,
   onSync,
 }: Props) {
-  const def = defOf(active);
+  const activeDef = def ?? defOf(active);
   const geoKey = `${side}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
 
   useEffect(() => {
@@ -130,13 +132,13 @@ export default function MapPanel({
           const { LAU2, COMMUNE } = feature.properties;
           const v = valueOf(LAU2);
           layer.bindTooltip(
-            `<b>${escapeHtml(COMMUNE)}</b><br/>${escapeHtml(def.label)} : ${fmt(v, def.unit, 0)} <span style="color:#94a3b8">(${def.year})</span>`,
+            `<b>${escapeHtml(COMMUNE)}</b><br/>${escapeHtml(activeDef.label)} : ${fmt(v, activeDef.unit, activeDef.decimals ?? 0)} <span style="color:#94a3b8">(${activeDef.year})</span>`,
             { sticky: true, className: "lux-tooltip" },
           );
           layer.on("click", () => onSelect(LAU2));
         }}
       />
-      {compare && <SyncController sync={sync} side={side} onSync={onSync} />}
+      {syncEnabled && <SyncController sync={sync} side={side} onSync={onSync} />}
     </MapContainer>
   );
 }

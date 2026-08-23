@@ -1,27 +1,34 @@
-import type { IndicatorKey } from "../types";
+import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
 interface Props {
+  mode: ViewMode;
+  onMode: (m: ViewMode) => void;
   active: IndicatorKey;
   onActive: (k: IndicatorKey) => void;
   activeB: IndicatorKey;
   onActiveB: (k: IndicatorKey) => void;
-  compare: boolean;
-  onCompare: (b: boolean) => void;
   communes: number;
   withData: number;
 }
 
+const MODES: { value: ViewMode; label: string; title: string }[] = [
+  { value: "simple", label: "Simple", title: "Une carte, un indicateur" },
+  { value: "dual", label: "Comparer", title: "Deux cartes côte à côte" },
+  { value: "ratio", label: "Ratio", title: "Rapport A / B sur une carte" },
+];
+
 export default function ControlPanel({
+  mode,
+  onMode,
   active,
   onActive,
   activeB,
   onActiveB,
-  compare,
-  onCompare,
   communes,
   withData,
 }: Props) {
+  const multi = mode !== "simple";
   return (
     <div
       style={{
@@ -46,6 +53,29 @@ export default function ControlPanel({
         Données ouvertes du Luxembourg
       </div>
 
+      <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+        {MODES.map((m) => (
+          <button
+            key={m.value}
+            title={m.title}
+            onClick={() => onMode(m.value)}
+            style={{
+              flex: 1,
+              padding: "6px 4px",
+              borderRadius: 8,
+              border: "1px solid #334155",
+              background: mode === m.value ? "#0ea5e9" : "#1e293b",
+              color: mode === m.value ? "#082f49" : "#cbd5e1",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
       <label
         style={{
           display: "block",
@@ -56,7 +86,8 @@ export default function ControlPanel({
           marginBottom: 4,
         }}
       >
-        Indicateur {compare ? "A" : ""}
+        Indicateur {multi ? "A" : ""}
+        {mode === "ratio" ? " (numérateur)" : ""}
       </label>
       <select
         value={active}
@@ -78,7 +109,7 @@ export default function ControlPanel({
         ))}
       </select>
 
-      {compare && (
+      {multi && (
         <>
           <label
             style={{
@@ -91,6 +122,7 @@ export default function ControlPanel({
             }}
           >
             Indicateur B
+            {mode === "ratio" ? " (dénominateur)" : ""}
           </label>
           <select
             value={activeB}
@@ -113,24 +145,6 @@ export default function ControlPanel({
           </select>
         </>
       )}
-
-      <button
-        onClick={() => onCompare(!compare)}
-        style={{
-          marginTop: 10,
-          width: "100%",
-          padding: "7px 8px",
-          borderRadius: 8,
-          border: "1px solid #0ea5e9",
-          background: compare ? "#0c4a6e" : "transparent",
-          color: "#7dd3fc",
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-        }}
-      >
-        {compare ? "✕ Fermer la comparaison" : "⚖ Comparer deux indicateurs"}
-      </button>
 
       <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>
         {communes} communes · {withData} avec données

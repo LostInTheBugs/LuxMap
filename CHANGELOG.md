@@ -2,6 +2,15 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.004] — 2026-08-23
+
+### Added
+- **Ratio mode**: single map colored by the ratio A / B (e.g. house vs
+  apartment prices), with A/B indicator selects, dedicated legend and a
+  "Ratio A/B" row in the detail panel
+- Mode selector (Simple / Comparer / Ratio) in the control panel
+- `deploy.sh` — one-command redeploy on serveur-prod (Traefik labels included)
+
 ## [2026.08.002-c1] — 2026-08-23
 
 ### Fixed

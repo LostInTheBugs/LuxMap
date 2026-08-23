@@ -4,7 +4,7 @@ import MapPanel from "./components/MapPanel";
 import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
 import { useMediaQuery } from "./hooks/useMediaQuery";
-import type { CommuneData, IndicatorKey } from "./types";
+import type { CommuneData, IndicatorDef, IndicatorKey, ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
 import indicatorsData from "./data/indicators.json";
 
@@ -26,9 +26,9 @@ export interface SyncState {
 export default function App() {
   const [data] = useState<CommuneData[]>(indicatorsData as CommuneData[]);
   const [geo, setGeo] = useState<GeoData | null>(null);
+  const [mode, setMode] = useState<ViewMode>("simple");
   const [active, setActive] = useState<IndicatorKey>("density");
   const [activeB, setActiveB] = useState<IndicatorKey>("prix_maison");
-  const [compare, setCompare] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncState | null>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -78,6 +78,41 @@ export default function App() {
     [valueOfKey, activeB],
   );
 
+  // --- ratio mode: single map colored by A / B ---
+  const ratioDef: IndicatorDef | null = useMemo(() => {
+    if (mode !== "ratio") return null;
+    return {
+      key: active,
+      label: `Ratio ${def.label} / ${defB.label}`,
+      unit: "",
+      year: `${def.year} / ${defB.year}`,
+      source: "calculé",
+      decimals: 2,
+    };
+  }, [mode, def, defB, active]);
+
+  const ratioValues = useMemo(() => {
+    if (mode !== "ratio") return [];
+    const out: number[] = [];
+    for (const r of data) {
+      const a = r[active];
+      const b = r[activeB];
+      if (a !== undefined && b !== undefined && b !== 0) out.push(a / b);
+    }
+    return out.sort((x, y) => x - y);
+  }, [data, active, activeB, mode]);
+
+  const ratioThresholds = useMemo(() => computeThresholds(ratioValues), [ratioValues]);
+
+  const ratioValueOf = useCallback(
+    (lau2: string): number | undefined => {
+      const a = valueOfKey(lau2, active);
+      const b = valueOfKey(lau2, activeB);
+      return a !== undefined && b !== undefined && b !== 0 ? a / b : undefined;
+    },
+    [valueOfKey, active, activeB],
+  );
+
   const onSync = useCallback((from: string, center: L.LatLng, zoom: number) => {
     setSync((prev) =>
       prev && prev.from === from && prev.zoom === zoom && prev.center.equals(center)
@@ -86,7 +121,13 @@ export default function App() {
     );
   }, []);
 
-  const withData = valuesOf(active).length;
+  const withData =
+    mode === "ratio" ? ratioValues.length : valuesOf(active).length;
+
+  const mapADef = mode === "ratio" && ratioDef ? ratioDef : def;
+  const mapAThresholds = mode === "ratio" ? ratioThresholds : thresholds;
+  const mapAValueOf = mode === "ratio" ? ratioValueOf : valueOfA;
+  const legendA = mode === "ratio" && ratioDef ? ratioDef : def;
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
@@ -104,18 +145,19 @@ export default function App() {
               geo={geo}
               side="A"
               active={active}
-              thresholds={thresholds}
+              def={mapADef}
+              thresholds={mapAThresholds}
               selected={selected}
-              valueOf={valueOfA}
+              valueOf={mapAValueOf}
               onSelect={setSelected}
-              compare={compare}
+              syncEnabled={mode === "dual"}
               sync={sync}
               onSync={onSync}
             />
           )}
-          <ColorLegend side="A" thresholds={thresholds} def={def} />
+          <ColorLegend side={mode === "dual" ? "A" : undefined} thresholds={mapAThresholds} def={legendA} />
         </div>
-        {compare && (
+        {mode === "dual" && (
           <div
             style={{
               flex: 1,
@@ -134,7 +176,7 @@ export default function App() {
                 selected={selected}
                 valueOf={valueOfB}
                 onSelect={setSelected}
-                compare={compare}
+                syncEnabled={mode === "dual"}
                 sync={sync}
                 onSync={onSync}
               />
@@ -145,12 +187,12 @@ export default function App() {
       </div>
 
       <ControlPanel
+        mode={mode}
+        onMode={setMode}
         active={active}
         onActive={setActive}
         activeB={activeB}
         onActiveB={setActiveB}
-        compare={compare}
-        onCompare={setCompare}
         communes={data.length}
         withData={withData}
       />
@@ -210,6 +252,27 @@ export default function App() {
               </div>
             );
           })}
+          {mode === "ratio" && ratioDef && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 14,
+                fontSize: 13,
+                lineHeight: 1.7,
+                borderTop: "1px solid #334155",
+                marginTop: 4,
+                paddingTop: 4,
+              }}
+            >
+              <span style={{ color: "#7dd3fc" }}>Ratio A/B</span>
+              <b>
+                {ratioValueOf(selected) === undefined
+                  ? "—"
+                  : ratioValueOf(selected)!.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
+              </b>
+            </div>
+          )}
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
             Cliquez sur une autre commune pour comparer
           </div>

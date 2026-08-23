@@ -16,10 +16,13 @@ export type IndicatorKey =
   | "prix_appart"
   | "prix_maison";
 
+export type ViewMode = "simple" | "dual" | "ratio";
+
 export interface IndicatorDef {
   key: IndicatorKey;
   label: string;
   unit: string;
   year: string;
   source: string;
+  decimals?: number;
 }

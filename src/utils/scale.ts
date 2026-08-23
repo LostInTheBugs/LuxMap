@@ -18,6 +18,7 @@ export const INDICATORS: IndicatorDef[] = [
     unit: "hab/km²",
     year: "2017",
     source: "STATEC",
+    decimals: 0,
   },
   {
     key: "chomage",
@@ -25,6 +26,7 @@ export const INDICATORS: IndicatorDef[] = [
     unit: "%",
     year: "2025",
     source: "STATEC",
+    decimals: 1,
   },
   {
     key: "o3_days",
@@ -32,6 +34,7 @@ export const INDICATORS: IndicatorDef[] = [
     unit: "jours",
     year: "2021-23",
     source: "AEV",
+    decimals: 1,
   },
   {
     key: "prix_appart",
@@ -39,6 +42,7 @@ export const INDICATORS: IndicatorDef[] = [
     unit: "€/m²",
     year: "2025-26",
     source: "data.public.lu",
+    decimals: 0,
   },
   {
     key: "prix_maison",
@@ -46,6 +50,7 @@ export const INDICATORS: IndicatorDef[] = [
     unit: "€/m²",
     year: "2025-26",
     source: "data.public.lu",
+    decimals: 0,
   },
 ];
 
