@@ -2,6 +2,12 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.002-c1] — 2026-08-23
+
+### Fixed
+- communes.geojson re-simplified with mapshaper (784 KB → 59 KB) after the
+  ETL regenerated it at full resolution
+
 ## [2026.08.002] — 2026-08-23
 
 ### Added
