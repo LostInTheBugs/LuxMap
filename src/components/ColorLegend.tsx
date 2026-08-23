@@ -4,9 +4,10 @@ import { PALETTE, fmt } from "../utils/scale";
 interface Props {
   thresholds: number[];
   def: IndicatorDef;
+  side?: "A" | "B";
 }
 
-export default function ColorLegend({ thresholds, def }: Props) {
+export default function ColorLegend({ thresholds, def, side }: Props) {
   if (thresholds.length === 0) return null;
   const n = thresholds.length + 1;
   const colors = PALETTE.slice(0, n);
@@ -16,7 +17,8 @@ export default function ColorLegend({ thresholds, def }: Props) {
     <div
       style={{
         position: "absolute",
-        left: 12,
+        left: side === "B" ? undefined : 12,
+        right: side === "B" ? 12 : undefined,
         bottom: 34,
         zIndex: 1000,
         background: "rgba(255,255,255,0.92)",
@@ -27,6 +29,7 @@ export default function ColorLegend({ thresholds, def }: Props) {
       }}
     >
       <div style={{ fontSize: 11, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
+        {side ? `${side} · ` : ""}
         {def.label} · {def.year}
       </div>
       <div style={{ display: "flex", gap: 2 }}>
@@ -43,7 +46,16 @@ export default function ColorLegend({ thresholds, def }: Props) {
           />
         ))}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#64748b", marginTop: 3, width: colors.length * 30 - 2 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 10,
+          color: "#64748b",
+          marginTop: 3,
+          width: colors.length * 30 - 2,
+        }}
+      >
         <span>{min}</span>
         <span>{max}</span>
       </div>

@@ -3,11 +3,18 @@ export interface CommuneData {
   commune: string;
   canton: string;
   density?: number;
+  chomage?: number;
+  o3_days?: number;
   prix_appart?: number;
   prix_maison?: number;
 }
 
-export type IndicatorKey = "density" | "prix_appart" | "prix_maison";
+export type IndicatorKey =
+  | "density"
+  | "chomage"
+  | "o3_days"
+  | "prix_appart"
+  | "prix_maison";
 
 export interface IndicatorDef {
   key: IndicatorKey;

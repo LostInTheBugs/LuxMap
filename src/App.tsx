@@ -1,26 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
-import MapView from "./Map";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import L from "leaflet";
+import MapPanel from "./components/MapPanel";
 import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 import type { CommuneData, IndicatorKey } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
 import indicatorsData from "./data/indicators.json";
 
-interface GeoFeature {
-  type: "Feature";
-  properties: { LAU2: string; COMMUNE: string; CANTON: string };
-  geometry: unknown;
-}
 interface GeoData {
   type: "FeatureCollection";
-  features: GeoFeature[];
+  features: Array<{
+    type: "Feature";
+    properties: { LAU2: string; COMMUNE: string; CANTON: string };
+    geometry: unknown;
+  }>;
+}
+
+export interface SyncState {
+  from: string;
+  center: L.LatLng;
+  zoom: number;
 }
 
 export default function App() {
   const [data] = useState<CommuneData[]>(indicatorsData as CommuneData[]);
   const [geo, setGeo] = useState<GeoData | null>(null);
   const [active, setActive] = useState<IndicatorKey>("density");
+  const [activeB, setActiveB] = useState<IndicatorKey>("prix_maison");
+  const [compare, setCompare] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [sync, setSync] = useState<SyncState | null>(null);
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   useEffect(() => {
     let cancelled = false;
@@ -36,47 +47,114 @@ export default function App() {
 
   const byLau2 = useMemo(() => {
     const m = new Map<string, CommuneData>();
-    for (const row of data ?? []) m.set(row.lau2, row);
+    for (const row of data) m.set(row.lau2, row);
     return m;
   }, [data]);
 
   const def = defOf(active);
-  const values = useMemo(() => {
-    if (!data) return [];
-    return data
-      .map((r) => r[active])
-      .filter((v): v is number => v !== undefined)
-      .sort((a, b) => a - b);
-  }, [data, active]);
+  const defB = defOf(activeB);
 
-  const thresholds = useMemo(() => computeThresholds(values), [values]);
+  const valuesOf = useCallback(
+    (key: IndicatorKey) =>
+      data
+        .map((r) => r[key])
+        .filter((v): v is number => v !== undefined)
+        .sort((a, b) => a - b),
+    [data],
+  );
+  const thresholds = useMemo(() => computeThresholds(valuesOf(active)), [valuesOf, active]);
+  const thresholdsB = useMemo(() => computeThresholds(valuesOf(activeB)), [valuesOf, activeB]);
 
-  const valueOf = (lau2: string): number | undefined => byLau2.get(lau2)?.[active];
+  const valueOfKey = useCallback(
+    (lau2: string, key: IndicatorKey): number | undefined => byLau2.get(lau2)?.[key],
+    [byLau2],
+  );
+  const valueOfA = useCallback(
+    (lau2: string) => valueOfKey(lau2, active),
+    [valueOfKey, active],
+  );
+  const valueOfB = useCallback(
+    (lau2: string) => valueOfKey(lau2, activeB),
+    [valueOfKey, activeB],
+  );
 
-  const valueOfKey = (lau2: string, key: IndicatorKey): number | undefined =>
-    byLau2.get(lau2)?.[key];
+  const onSync = useCallback((from: string, center: L.LatLng, zoom: number) => {
+    setSync((prev) =>
+      prev && prev.from === from && prev.zoom === zoom && prev.center.equals(center)
+        ? prev
+        : { from, center, zoom },
+    );
+  }, []);
 
-  const withData = values.length;
+  const withData = valuesOf(active).length;
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
-      {geo && (
-        <MapView
-          geo={geo}
-          thresholds={thresholds}
-          active={active}
-          selected={selected}
-          valueOf={valueOf}
-          onSelect={setSelected}
-        />
-      )}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+        }}
+      >
+        <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+          {geo && (
+            <MapPanel
+              geo={geo}
+              side="A"
+              active={active}
+              thresholds={thresholds}
+              selected={selected}
+              valueOf={valueOfA}
+              onSelect={setSelected}
+              compare={compare}
+              sync={sync}
+              onSync={onSync}
+            />
+          )}
+          <ColorLegend side="A" thresholds={thresholds} def={def} />
+        </div>
+        {compare && (
+          <div
+            style={{
+              flex: 1,
+              position: "relative",
+              minHeight: 0,
+              borderTop: isMobile ? "2px solid #0f172a" : undefined,
+              borderLeft: isMobile ? undefined : "2px solid #0f172a",
+            }}
+          >
+            {geo && (
+              <MapPanel
+                geo={geo}
+                side="B"
+                active={activeB}
+                thresholds={thresholdsB}
+                selected={selected}
+                valueOf={valueOfB}
+                onSelect={setSelected}
+                compare={compare}
+                sync={sync}
+                onSync={onSync}
+              />
+            )}
+            <ColorLegend side="B" thresholds={thresholdsB} def={defB} />
+          </div>
+        )}
+      </div>
+
       <ControlPanel
         active={active}
         onActive={setActive}
-        communes={data?.length ?? 0}
+        activeB={activeB}
+        onActiveB={setActiveB}
+        compare={compare}
+        onCompare={setCompare}
+        communes={data.length}
         withData={withData}
       />
-      <ColorLegend thresholds={thresholds} def={def} />
+
       <footer
         style={{
           position: "absolute",
@@ -90,8 +168,9 @@ export default function App() {
           borderRadius: 6,
         }}
       >
-        Sources : STATEC (densité 2017), data.public.lu (prix annoncés 2025-26), OpenStreetMap
+        Sources : STATEC (densité 2017 · chômage 2025), AEV (O₃ 2021-23), data.public.lu (prix 2025-26), OpenStreetMap
       </footer>
+
       {selected && (
         <div
           style={{
@@ -116,7 +195,16 @@ export default function App() {
           {INDICATOR_ROWS.map(([key, label, unit]) => {
             const v = valueOfKey(selected, key);
             return (
-              <div key={key} style={{ display: "flex", justifyContent: "space-between", gap: 14, fontSize: 13, lineHeight: 1.7 }}>
+              <div
+                key={key}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 14,
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                }}
+              >
                 <span style={{ color: "#cbd5e1" }}>{label}</span>
                 <b>{v === undefined ? "—" : `${v.toLocaleString("fr-FR")} ${unit}`}</b>
               </div>
@@ -133,6 +221,8 @@ export default function App() {
 
 const INDICATOR_ROWS: [IndicatorKey, string, string][] = [
   ["density", "Densité", "hab/km²"],
+  ["chomage", "Chômage", "%"],
+  ["o3_days", "Jours O₃", "j"],
   ["prix_appart", "Appartement", "€/m²"],
   ["prix_maison", "Maison", "€/m²"],
 ];

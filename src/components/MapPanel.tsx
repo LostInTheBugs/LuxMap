@@ -1,27 +1,94 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { GeoJSON, MapContainer, TileLayer, ZoomControl } from "react-leaflet";
-import type { IndicatorKey } from "./types";
-import { colorFor, defOf, fmt } from "./utils/scale";
+import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
+import type { IndicatorKey } from "../types";
+import { colorFor, defOf, fmt } from "../utils/scale";
+import type { SyncState } from "../App";
 
 const BOUNDS = L.latLngBounds([49.4, 5.72], [50.2, 6.54]);
 
+interface GeoFeature {
+  type: "Feature";
+  properties: { LAU2: string; COMMUNE: string; CANTON: string };
+  geometry: unknown;
+}
+interface GeoData {
+  type: "FeatureCollection";
+  features: GeoFeature[];
+}
+
 interface Props {
-  geo: { type: "FeatureCollection"; features: Array<{ type: "Feature"; properties: { LAU2: string; COMMUNE: string }; geometry: unknown }> };
-  thresholds: number[];
+  geo: GeoData;
+  side: string;
   active: IndicatorKey;
+  thresholds: number[];
   selected: string | null;
   valueOf: (lau2: string) => number | undefined;
   onSelect: (lau2: string | null) => void;
+  compare: boolean;
+  sync: SyncState | null;
+  onSync: (from: string, center: L.LatLng, zoom: number) => void;
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-export default function MapView({ geo, thresholds, active, selected, valueOf, onSelect }: Props) {
+/** Keeps two maps' pan/zoom in sync (moveend → shared state → setView on the other). */
+function SyncController({
+  sync,
+  side,
+  onSync,
+}: {
+  sync: SyncState | null;
+  side: string;
+  onSync: Props["onSync"];
+}) {
+  const map = useMap();
+  const applying = useRef(false);
+
+  useEffect(() => {
+    const onMoveEnd = () => {
+      if (applying.current) {
+        applying.current = false;
+        return;
+      }
+      onSync(side, map.getCenter(), map.getZoom());
+    };
+    map.on("moveend", onMoveEnd);
+    return () => {
+      map.off("moveend", onMoveEnd);
+    };
+  }, [map, side, onSync]);
+
+  useEffect(() => {
+    if (sync && sync.from !== side) {
+      applying.current = true;
+      map.setView(sync.center, sync.zoom, { animate: false });
+    }
+  }, [sync, map, side]);
+
+  return null;
+}
+
+export default function MapPanel({
+  geo,
+  side,
+  active,
+  thresholds,
+  selected,
+  valueOf,
+  onSelect,
+  compare,
+  sync,
+  onSync,
+}: Props) {
   const def = defOf(active);
-  const geoKey = `${active}-${thresholds.join(",")}-${selected ?? ""}`;
+  const geoKey = `${side}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -69,6 +136,7 @@ export default function MapView({ geo, thresholds, active, selected, valueOf, on
           layer.on("click", () => onSelect(LAU2));
         }}
       />
+      {compare && <SyncController sync={sync} side={side} onSync={onSync} />}
     </MapContainer>
   );
 }

@@ -20,6 +20,20 @@ export const INDICATORS: IndicatorDef[] = [
     source: "STATEC",
   },
   {
+    key: "chomage",
+    label: "Taux de chômage",
+    unit: "%",
+    year: "2025",
+    source: "STATEC",
+  },
+  {
+    key: "o3_days",
+    label: "Jours O₃ > 120 µg/m³",
+    unit: "jours",
+    year: "2021-23",
+    source: "AEV",
+  },
+  {
     key: "prix_appart",
     label: "Prix annoncés — appartements",
     unit: "€/m²",

@@ -4,7 +4,9 @@
 Inputs (data/raw/):
   - limadmin.geojson        (dataset "Limites administratives du Grand-Duché de Luxembourg")
   - density2017.json        (STATEC LUSTAT SDMX-JSON, flow LU1,DF_X020,1.1, 2017)
+  - chomage.json            (STATEC LUSTAT SDMX-JSON, flow LU1,DF_X026,1.1, 2023-2025)
   - processed/prix.json     (output of parse_prix.py)
+  - processed/o3_communes.json (output of interpolate_o3.py)
 
 Outputs:
   - src/data/indicators.json   [{lau2, commune, canton, density?, prix_appart?, prix_maison?}]
@@ -50,6 +52,37 @@ def load_density() -> dict[str, float]:
     return out
 
 
+def load_chomage() -> dict[str, float]:
+    """Parse STATEC SDMX-JSON (flow DF_X026) → {commune_name: unemployment rate %}.
+
+    Uses VARIABLE=C6 (Unemployment rate), latest year with data per commune.
+    """
+    with open(os.path.join(RAW, "chomage.json"), encoding="utf-8") as f:
+        d = json.load(f)
+    st = d["structure"]
+    var_dim = st["dimensions"]["series"][0]
+    spec_dim = st["dimensions"]["series"][1]
+    rate_idx = next(i for i, v in enumerate(var_dim["values"]) if v["id"] == "C6")
+    spec_names = {v["id"]: v["name"] for v in spec_dim["values"]}
+    n_periods = len(st["dimensions"]["observation"][0]["values"])
+    out: dict[str, float] = {}
+    for sk, sv in d["dataSets"][0]["series"].items():
+        vi, si, _ = (int(x) for x in sk.split(":"))
+        if vi != rate_idx:
+            continue
+        name = spec_names[spec_dim["values"][si]["id"]]
+        obs = sv.get("observations", {})
+        val = None
+        for i in range(n_periods - 1, -1, -1):  # latest year first
+            o = obs.get(str(i))
+            if o and o[0] not in (None, ""):
+                val = o[0]
+                break
+        if val is not None:
+            out[name] = float(val)
+    return out
+
+
 def load_prix() -> dict[str, dict[str, float]]:
     with open(os.path.join(PROC, "prix.json"), encoding="utf-8") as f:
         return json.load(f)
@@ -61,7 +94,11 @@ def main() -> None:
     communes_fc = gj["communes"]
 
     density = load_density()
+    chomage = load_chomage()
+    chomage_by_norm = {norm(n): v for n, v in chomage.items()}
     prix = load_prix()
+    with open(os.path.join(PROC, "o3_communes.json"), encoding="utf-8") as f:
+        o3 = json.load(f)
     prix_by_norm = {
         key: {norm(n): v for n, v in d.items() if norm(n) not in BLACKLIST}
         for key, d in prix.items()
@@ -75,6 +112,11 @@ def main() -> None:
         row = {"lau2": lau2, "commune": name, "canton": p["CANTON"]}
         if lau2 in density:
             row["density"] = round(density[lau2], 1)
+        chom = chomage_by_norm.get(norm(name))
+        if chom is not None:
+            row["chomage"] = round(chom, 1)
+        if lau2 in o3:
+            row["o3_days"] = o3[lau2]
         for key in prix_by_norm:
             v = prix_by_norm[key].get(norm(name))
             if v is not None:
@@ -87,9 +129,7 @@ def main() -> None:
     out = []
     for row in sorted(indicators, key=lambda r: r["commune"]):
         clean = {"lau2": row["lau2"], "commune": row["commune"], "canton": row["canton"]}
-        if "density" in row:
-            clean["density"] = row["density"]
-        for key in ("prix_appart", "prix_maison"):
+        for key in ("density", "chomage", "o3_days", "prix_appart", "prix_maison"):
             if key in row:
                 clean[key] = row[key]
         out.append(clean)
@@ -119,6 +159,8 @@ def main() -> None:
 
     print(f"communes: {len(out)}")
     print(f"  density: {sum('density' in r for r in out)}")
+    print(f"  chomage: {sum('chomage' in r for r in out)}")
+    print(f"  o3_days: {sum('o3_days' in r for r in out)}")
     print(f"  prix_appart: {sum('prix_appart' in r for r in out)}")
     print(f"  prix_maison: {sum('prix_maison' in r for r in out)}")
     for k, names in unmatched.items():
