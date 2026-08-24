@@ -63,7 +63,6 @@ function polygonCentroid(
     }
     const area = Math.abs(s) / 2;
     if (area <= bestArea) continue;
-    bestArea = area;
     let a = 0;
     let cx = 0;
     let cy = 0;
@@ -75,7 +74,9 @@ function polygonCentroid(
       cx += (x1 + x2) * f;
       cy += (y1 + y2) * f;
     }
-    best = a === 0 ? null : [cx / (3 * a), cy / (3 * a)];
+    if (a === 0) continue; // anneau dégénéré : garder le meilleur candidat précédent
+    bestArea = area;
+    best = [cx / (3 * a), cy / (3 * a)];
   }
   return best;
 }
