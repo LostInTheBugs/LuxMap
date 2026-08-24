@@ -2,6 +2,14 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.004-c3] — 2026-08-23
+
+### Fixed
+- Refit hardened: runs in requestAnimationFrame + `invalidateSize()` before
+  `fitBounds` (fresh layout size), window-resize auto-size handler added
+- Version badge in the control panel (bottom right) to identify the running
+  build at a glance
+
 ## [2026.08.004-c2] — 2026-08-23
 
 ### Fixed

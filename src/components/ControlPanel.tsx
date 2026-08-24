@@ -1,6 +1,8 @@
 import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
+const APP_VERSION = "2026.08.004-c3";
+
 interface Props {
   mode: ViewMode;
   onMode: (m: ViewMode) => void;
@@ -148,6 +150,7 @@ export default function ControlPanel({
 
       <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>
         {communes} communes · {withData} avec données
+        <span style={{ float: "right", color: "#475569" }}>v{APP_VERSION}</span>
       </div>
     </div>
   );

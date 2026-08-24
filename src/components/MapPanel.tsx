@@ -44,12 +44,30 @@ function escapeHtml(s: string): string {
  * Fits the map to the country bounds whenever `refitKey` changes — both maps
  * re-fit on layout changes (simple/ratio = full width, dual = half width) so
  * they always start from the same center/zoom.
+ * Bulletproofing: runs in a requestAnimationFrame (after the browser applied
+ * the new flex layout) and calls invalidateSize() first so the fit reads the
+ * fresh container size.
  */
 function RefitController({ bounds, refitKey }: { bounds: L.LatLngBounds; refitKey: number }) {
   const map = useMap();
   useEffect(() => {
-    map.fitBounds(bounds, { padding: [20, 20] });
+    const raf = requestAnimationFrame(() => {
+      map.invalidateSize();
+      map.fitBounds(bounds, { padding: [20, 20], animate: false });
+    });
+    return () => cancelAnimationFrame(raf);
   }, [map, bounds, refitKey]);
+  return null;
+}
+
+/** Keeps the map size in sync with its container on window resizes. */
+function AutoSize() {
+  const map = useMap();
+  useEffect(() => {
+    const onResize = () => map.invalidateSize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [map]);
   return null;
 }
 
@@ -130,6 +148,7 @@ export default function MapPanel({
       />
       <ZoomControl position="bottomright" />
       <RefitController bounds={BOUNDS} refitKey={refitKey} />
+      <AutoSize />
       <GeoJSON
         key={geoKey}
         data={geo}
