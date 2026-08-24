@@ -29,6 +29,7 @@ interface Props {
   syncEnabled: boolean;
   sync: SyncState | null;
   onSync: (from: string, center: L.LatLng, zoom: number) => void;
+  refitKey: number;
 }
 
 function escapeHtml(s: string): string {
@@ -37,6 +38,19 @@ function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * Fits the map to the country bounds whenever `refitKey` changes — both maps
+ * re-fit on layout changes (simple/ratio = full width, dual = half width) so
+ * they always start from the same center/zoom.
+ */
+function RefitController({ bounds, refitKey }: { bounds: L.LatLngBounds; refitKey: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.fitBounds(bounds, { padding: [20, 20] });
+  }, [map, bounds, refitKey]);
+  return null;
 }
 
 /** Keeps two maps' pan/zoom in sync (moveend → shared state → setView on the other). */
@@ -88,6 +102,7 @@ export default function MapPanel({
   syncEnabled,
   sync,
   onSync,
+  refitKey,
 }: Props) {
   const activeDef = def ?? defOf(active);
   const geoKey = `${side}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
@@ -102,8 +117,8 @@ export default function MapPanel({
 
   return (
     <MapContainer
-      bounds={BOUNDS}
-      boundsOptions={{ padding: [20, 20] }}
+      center={[49.75, 6.1]}
+      zoom={9}
       zoomControl={false}
       style={{ position: "absolute", inset: 0 }}
       minZoom={8}
@@ -114,6 +129,7 @@ export default function MapPanel({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       />
       <ZoomControl position="bottomright" />
+      <RefitController bounds={BOUNDS} refitKey={refitKey} />
       <GeoJSON
         key={geoKey}
         data={geo}

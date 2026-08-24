@@ -121,8 +121,20 @@ export default function App() {
     );
   }, []);
 
+  // Changing layout mode: drop stale sync state so the re-fit is deterministic
+  // (a leftover sync from a previous zoom would otherwise override the fresh fit).
+  const changeMode = useCallback((m: ViewMode) => {
+    setMode(m);
+    setSync(null);
+  }, []);
+
   const withData =
     mode === "ratio" ? ratioValues.length : valuesOf(active).length;
+
+  // Re-fit both maps to the country bounds whenever the layout changes
+  // (simple/ratio = full width, dual = half width). Without this, map A keeps
+  // its full-width zoom when the split happens → the two maps are misaligned.
+  const refitKey = mode === "dual" ? 2 : 1;
 
   const mapADef = mode === "ratio" && ratioDef ? ratioDef : def;
   const mapAThresholds = mode === "ratio" ? ratioThresholds : thresholds;
@@ -153,6 +165,7 @@ export default function App() {
               syncEnabled={mode === "dual"}
               sync={sync}
               onSync={onSync}
+              refitKey={refitKey}
             />
           )}
           <ColorLegend side={mode === "dual" ? "A" : undefined} thresholds={mapAThresholds} def={legendA} />
@@ -179,6 +192,7 @@ export default function App() {
                 syncEnabled={mode === "dual"}
                 sync={sync}
                 onSync={onSync}
+                refitKey={refitKey}
               />
             )}
             <ColorLegend side="B" thresholds={thresholdsB} def={defB} />
@@ -188,7 +202,7 @@ export default function App() {
 
       <ControlPanel
         mode={mode}
-        onMode={setMode}
+        onMode={changeMode}
         active={active}
         onActive={setActive}
         activeB={activeB}
