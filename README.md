@@ -40,7 +40,7 @@ with side-by-side comparisons between indicators.
 - Hover tooltips (value + year), click on a commune for a detail panel
 - Data ETL in Python (`data/scripts/`): STATEC LUSTAT SDMX-JSON, data.public.lu
   udata API, XLS parsing, IDW interpolation
-- Docker + nginx (port 3003), ready for Cloudflare → https://luxmap.cloudfr.net
+- Docker + nginx (port 8008), ready for Cloudflare → https://luxmap.cloudfr.net
 
 ## Data sources
 
@@ -70,14 +70,14 @@ Docker multi-stage build (node → nginx), reverse-proxied by Cloudflare
 
 ```bash
 docker build -t luxmap .
-docker run -d -p ${PORT:-3003}:80 luxmap
+docker run -d -p ${PORT:-8008}:80 luxmap
 ```
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3003` | Internal port exposed by the container |
+| `PORT` | `8008` | Internal port exposed by the container |
 
 ## Project structure
 

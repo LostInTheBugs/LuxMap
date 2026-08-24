@@ -3,8 +3,9 @@
 # Run from the repo root: sudo bash deploy.sh
 set -euo pipefail
 cd "$(dirname "$0")"
+PORT="${PORT:-8008}"
 
-docker build -t luxmap .
+docker build --build-arg PORT="${PORT}" -t luxmap .
 docker rm -f luxmap 2>/dev/null || true
 docker run -d --name luxmap --restart unless-stopped --network traefik-public \
   -l traefik.enable=true \
@@ -14,7 +15,7 @@ docker run -d --name luxmap --restart unless-stopped --network traefik-public \
   -l 'traefik.http.routers.luxmap-web.rule=Host(`luxmap.cloudfr.net`)' \
   -l traefik.http.routers.luxmap-web.entrypoints=web \
   -l 'traefik.http.routers.luxmap-web.service=luxmap' \
-  -l 'traefik.http.services.luxmap.loadbalancer.server.port=3003' \
+  -l "traefik.http.services.luxmap.loadbalancer.server.port=${PORT}" \
   luxmap
 
 echo "LuxMap deployed (container luxmap, traefik-public, web+websecure+LE)."
