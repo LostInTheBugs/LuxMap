@@ -59,7 +59,7 @@ See [docs/data-sources.md](docs/data-sources.md) for the full inventory.
 ## Installation
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 npm run dev
 ```
 
