@@ -1,7 +1,7 @@
 import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.012";
+const APP_VERSION = "2026.08.014";
 
 interface Props {
   mode: ViewMode;
@@ -23,6 +23,9 @@ interface Props {
   onYearB: (y: string) => void;
   playing: boolean;
   onPlay: () => void;
+  syncYears: boolean;
+  onSyncYears: (v: boolean) => void;
+  commonYears: string[];
 }
 
 const MODES: { value: ViewMode; label: string; title: string }[] = [
@@ -63,8 +66,12 @@ export default function ControlPanel({
   onYearB,
   playing,
   onPlay,
+  syncYears,
+  onSyncYears,
+  commonYears,
 }: Props) {
   const multi = mode === "dual" || mode === "ratio";
+  const synced = mode === "dual" && syncYears && commonYears.length > 0;
   return (
     <div
       style={{
@@ -102,7 +109,7 @@ export default function ControlPanel({
         ))}
       </div>
 
-      {mode !== "ratio" && yearsA.length > 0 && (
+      {mode !== "ratio" && ((synced && commonYears.length > 0) || yearsA.length > 0) && (
         <div
           style={{
             display: "flex",
@@ -133,10 +140,10 @@ export default function ControlPanel({
           </button>
           <input
             type="range"
-            min={yearsA[0]}
-            max={yearsA[yearsA.length - 1]}
+            min={synced ? commonYears[0] : yearsA[0]}
+            max={synced ? commonYears[commonYears.length - 1] : yearsA[yearsA.length - 1]}
             step={1}
-            value={yearA ?? yearsA[yearsA.length - 1]}
+            value={yearA ?? (synced ? commonYears[commonYears.length - 1] : yearsA[yearsA.length - 1])}
             onChange={(e) => onYearA(e.target.value)}
             aria-label="Année"
             style={{ flex: 1, accentColor: "#0ea5e9" }}
@@ -147,7 +154,32 @@ export default function ControlPanel({
         </div>
       )}
 
-      {mode === "dual" && yearsB.length > 0 && (
+      {mode === "dual" && yearsA.length > 0 && yearsB.length > 0 && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginTop: 8,
+            fontSize: 11.5,
+            color: "#cbd5e1",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={syncYears}
+            onChange={(e) => onSyncYears(e.target.checked)}
+            style={{ accentColor: "#0ea5e9", cursor: "pointer", width: 14, height: 14 }}
+          />
+          🔗 Synchroniser les années
+          <span title="Ne lit que les années où les deux jeux de données existent" style={{ color: "#64748b" }}>
+            (?)
+          </span>
+        </label>
+      )}
+
+      {mode === "dual" && !synced && yearsB.length > 0 && (
         <div
           style={{
             display: "flex",

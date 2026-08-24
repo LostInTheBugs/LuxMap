@@ -128,11 +128,34 @@ export default function App() {
     [activeB],
   );
   const [yearB, setYearB] = useState<string | null>(null);
+  const [syncYears, setSyncYears] = useState(false);
   const currentYearB = useMemo(() => {
     if (yearsB.length === 0) return null;
     if (yearB && yearsB.includes(yearB)) return yearB;
     return yearsB[yearsB.length - 1];
   }, [yearsB, yearB]);
+
+  // in dual mode with synced years: only the years where BOTH series exist
+  const commonYears = useMemo(
+    () => yearsA.filter((y) => yearsB.includes(y)),
+    [yearsA, yearsB],
+  );
+
+  // keep both maps on the same (common) year while synced
+  useEffect(() => {
+    if (!syncYears || mode !== "dual" || commonYears.length === 0) return;
+    const y = yearA && commonYears.includes(yearA) ? yearA : commonYears[commonYears.length - 1];
+    if (yearA !== y) setYearA(y);
+    if (yearB !== y) setYearB(y);
+  }, [syncYears, mode, commonYears, yearA, yearB]);
+
+  const handleYearA = useCallback(
+    (v: string) => {
+      setYearA(v);
+      if (syncYears && mode === "dual") setYearB(v);
+    },
+    [syncYears, mode],
+  );
 
   const yearlyValuesA = useMemo(() => {
     if (!currentYearA) return [];
@@ -163,15 +186,18 @@ export default function App() {
   // auto-advance the year while playing (loops back to the first year)
   useEffect(() => {
     if (!playing || yearsA.length === 0) return;
+    const years = syncYears && mode === "dual" && commonYears.length > 0 ? commonYears : yearsA;
     const id = setInterval(() => {
       setYearA((prev) => {
-        const cur = prev && yearsA.includes(prev) ? prev : yearsA[yearsA.length - 1];
-        const idx = yearsA.indexOf(cur);
-        return yearsA[(idx + 1) % yearsA.length];
+        const cur = prev && years.includes(prev) ? prev : years[years.length - 1];
+        const idx = years.indexOf(cur);
+        const next = years[(idx + 1) % years.length];
+        if (syncYears && mode === "dual") setYearB(next);
+        return next;
       });
     }, 500);
     return () => clearInterval(id);
-  }, [playing, yearsA]);
+  }, [playing, yearsA, syncYears, mode, commonYears]);
 
   const ratioValueOf = useCallback(
     (lau2: string): number | undefined => {
@@ -318,12 +344,15 @@ export default function App() {
         onInfo={() => setShowInfo(true)}
         yearsA={yearsA}
         yearA={currentYearA}
-        onYearA={setYearA}
+        onYearA={handleYearA}
         yearsB={yearsB}
         yearB={currentYearB}
         onYearB={setYearB}
         playing={playing}
         onPlay={() => setPlaying((p) => !p)}
+        syncYears={syncYears}
+        onSyncYears={setSyncYears}
+        commonYears={commonYears}
       />
 
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}

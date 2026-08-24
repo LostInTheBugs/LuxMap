@@ -2,6 +2,14 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.014] — 2026-08-24
+
+### Added
+- **"Synchroniser les années" checkbox** in Comparer mode (when both
+  indicators have historical series): a single slider + play button loops
+  through the intersection of the two series' years, advancing both maps
+  together
+
 ## [2026.08.012] — 2026-08-24
 
 ### Removed
