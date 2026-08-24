@@ -1,4 +1,6 @@
 import type { IndicatorKey } from "../types";
+import { useLang } from "../i18n";
+import { APP_VERSION } from "./ControlPanel";
 
 interface SourceEntry {
   key: IndicatorKey | "base";
@@ -121,6 +123,11 @@ interface Props {
 }
 
 export default function InfoModal({ onClose }: Props) {
+  const { t } = useLang();
+  const tOr = (k: string, fallback: string) => {
+    const v = t(k);
+    return v === k ? fallback : v;
+  };
   return (
     <div
       onClick={onClose}
@@ -158,10 +165,10 @@ export default function InfoModal({ onClose }: Props) {
             marginBottom: 12,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 18, color: "#f8fafc" }}>ℹ️ Sources des données</h2>
+          <h2 style={{ margin: 0, fontSize: 18, color: "#f8fafc" }}>{t("modal.title")}</h2>
           <button
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label={t("panel.close")}
             style={{
               border: "none",
               background: "#1e293b",
@@ -177,8 +184,7 @@ export default function InfoModal({ onClose }: Props) {
           </button>
         </div>
         <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 0 }}>
-          Chaque indicateur de la carte provient d'un jeu de données public. Cliquez sur un lien pour
-          consulter la source originale.
+          {t("modal.intro")}
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {SOURCES.map((s) => (
@@ -190,11 +196,15 @@ export default function InfoModal({ onClose }: Props) {
                 padding: "10px 12px",
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>{s.label}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9" }}>
+                {tOr("src." + s.key + ".label", s.label)}
+              </div>
               <div style={{ fontSize: 11.5, color: "#94a3b8", marginTop: 2 }}>
                 {s.org} · {s.period}
               </div>
-              <div style={{ fontSize: 11.5, color: "#cbd5e1", marginTop: 4 }}>{s.note}</div>
+              <div style={{ fontSize: 11.5, color: "#cbd5e1", marginTop: 4 }}>
+                {tOr("src." + s.key + ".note", s.note)}
+              </div>
               <a
                 href={s.url}
                 target="_blank"
@@ -207,8 +217,7 @@ export default function InfoModal({ onClose }: Props) {
           ))}
         </div>
         <p style={{ fontSize: 11.5, color: "#64748b", marginTop: 14, lineHeight: 1.5 }}>
-          Fond de carte : © OpenStreetMap. Les données sont présentées à titre informatif ; les prix
-          annoncés ne reflètent pas les transactions effectives. Version 2026.08.008 — MIT — LostInTheBugs.
+          {t("modal.footer", { version: APP_VERSION })}
         </p>
       </div>
     </div>

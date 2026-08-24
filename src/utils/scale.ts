@@ -131,7 +131,7 @@ export function colorFor(value: number | undefined, thresholds: number[]): strin
   return PALETTE[Math.min(i, PALETTE.length - 1)];
 }
 
-export function fmt(v: number | undefined, unit: string, decimals = 0): string {
+export function fmt(v: number | undefined, unit: string, decimals = 0, locale = "fr-FR"): string {
   if (v === undefined) return "—";
-  return v.toLocaleString("fr-FR", { maximumFractionDigits: decimals }) + (unit ? " " + unit : "");
+  return v.toLocaleString(locale, { maximumFractionDigits: decimals }) + (unit ? " " + unit : "");
 }

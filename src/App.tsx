@@ -5,6 +5,7 @@ import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
 import InfoModal from "./components/InfoModal";
 import DisclaimerModal from "./components/DisclaimerModal";
+import { LangProvider, useLang } from "./i18n";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { CIRCONSCRIPTIONS, type AggMode, type AggStat, type CommuneData, type IndicatorDef, type IndicatorKey, type SeriesData, type ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
@@ -35,7 +36,8 @@ function median(sorted: number[]): number {
   return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
 }
 
-export default function App() {
+function Main() {
+  const { t, indLabel, indUnit, locale } = useLang();
   const [data, setData] = useState<CommuneData[]>([]);
   const [seriesData, setSeriesData] = useState<SeriesData>({});
 
@@ -429,7 +431,8 @@ export default function App() {
         : currentYearA
           ? yearlyValuesA.length
           : valuesOf(active).length;
-  const unitLabel = aggMode === "canton" ? "cantons" : aggMode === "circonscription" ? "circonscriptions" : "communes";
+  const unitLabelKey = aggMode === "canton" ? "cantons" : aggMode === "circonscription" ? "circonscriptions" : "communes";
+  const unitLabel = t("unit." + unitLabelKey);
   const unitCount = aggMode === "none" ? data.length : new Set(data.map(groupKeyOf)).size;
 
   return (
@@ -557,7 +560,7 @@ export default function App() {
             borderRadius: 6,
           }}
         >
-          Sources : STATEC (densité 2017 · chômage 2025), AEV (O₃ 2021-23), data.public.lu (prix 2025-26), OpenStreetMap
+          {t("footer.credits")}
         </footer>
       )}
 
@@ -580,7 +583,7 @@ export default function App() {
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
               {selected}
               <span style={{ fontWeight: 400, color: "#94a3b8", marginLeft: 6, fontSize: 12 }}>
-                {aggStat === "median" ? "médiane" : "moyenne"} · {aggMode === "canton" ? "canton" : "circonscription"}
+                {t(aggStat === "median" ? "detail.median" : "detail.mean")} · {t(aggMode === "canton" ? "detail.canton" : "detail.circ")}
               </span>
             </div>
             <div
@@ -592,11 +595,11 @@ export default function App() {
                 lineHeight: 1.7,
               }}
             >
-              <span style={{ color: "#cbd5e1" }}>{def.label}</span>
+              <span style={{ color: "#cbd5e1" }}>{indLabel(def.key)}</span>
               <b>
                 {aggregatesA[selected] === undefined
                   ? "—"
-                  : `${aggregatesA[selected].toLocaleString("fr-FR", { maximumFractionDigits: def.decimals ?? 0 })} ${def.unit}`}
+                  : `${aggregatesA[selected].toLocaleString(locale, { maximumFractionDigits: def.decimals ?? 0 })} ${indUnit(def.unit)}`}
               </b>
             </div>
             {evoA && evoA.map[selected] !== undefined && (
@@ -612,15 +615,15 @@ export default function App() {
                   paddingTop: 4,
                 }}
               >
-                <span style={{ color: "#cbd5e1" }}>Évolution vs {evoA.prevYear}</span>
+                <span style={{ color: "#cbd5e1" }}>{t("detail.evo", { year: evoA.prevYear })}</span>
                 <b style={{ color: evoA.map[selected] >= 0 ? "#4ade80" : "#f87171" }}>
                   {evoA.map[selected] >= 0 ? "▲ +" : "▼ "}
-                  {evoA.map[selected].toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %
+                  {evoA.map[selected].toLocaleString(locale, { maximumFractionDigits: 1 })} %
                 </b>
               </div>
             )}
             <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
-              Cliquez ailleurs pour quitter
+              {t("detail.exit")}
             </div>
           </div>
         ) : (
@@ -644,7 +647,7 @@ export default function App() {
               {byLau2.get(selected)?.canton}
             </span>
           </div>
-          {INDICATOR_ROWS.map(([key, label, unit]) => {
+          {INDICATOR_ROWS.map(([key, labelKey, unit]) => {
             const v = valueOfKey(selected, key);
             return (
               <div
@@ -657,8 +660,8 @@ export default function App() {
                   lineHeight: 1.7,
                 }}
               >
-                <span style={{ color: "#cbd5e1" }}>{label}</span>
-                <b>{v === undefined ? "—" : `${v.toLocaleString("fr-FR")} ${unit}`}</b>
+                <span style={{ color: "#cbd5e1" }}>{t("row." + labelKey)}</span>
+                <b>{v === undefined ? "—" : `${v.toLocaleString(locale)} ${indUnit(unit)}`}</b>
               </div>
             );
           })}
@@ -675,16 +678,16 @@ export default function App() {
                 paddingTop: 4,
               }}
             >
-              <span style={{ color: "#7dd3fc" }}>Ratio A/B</span>
+              <span style={{ color: "#7dd3fc" }}>{t("detail.ratio")}</span>
               <b>
                 {ratioValueOf(selected) === undefined
                   ? "—"
-                  : ratioValueOf(selected)!.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
+                  : ratioValueOf(selected)!.toLocaleString(locale, { maximumFractionDigits: 2 })}
               </b>
             </div>
           )}
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
-            Cliquez sur une autre commune pour comparer
+            {t("detail.hint")}
           </div>
           </div>
         ))}
@@ -692,13 +695,21 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <LangProvider>
+      <Main />
+    </LangProvider>
+  );
+}
+
 const INDICATOR_ROWS: [IndicatorKey, string, string][] = [
-  ["density", "Densité", "hab/km²"],
-  ["chomage", "Chômage", "%"],
-  ["o3_days", "Jours O₃", "j"],
-  ["age_median", "Âge médian", "ans"],
-  ["etrangers", "Étrangers", "%"],
-  ["loyer_appart", "Loyer appart.", "€/m²/mois"],
-  ["prix_appart", "Appartement", "€/m²"],
-  ["prix_maison", "Maison", "€/m²"],
+  ["density", "density", "hab/km²"],
+  ["chomage", "chomage", "%"],
+  ["o3_days", "o3_days", "j"],
+  ["age_median", "age_median", "ans"],
+  ["etrangers", "etrangers", "%"],
+  ["loyer_appart", "loyer_appart", "€/m²/mois"],
+  ["prix_appart", "prix_appart", "€/m²"],
+  ["prix_maison", "prix_maison", "€/m²"],
 ];

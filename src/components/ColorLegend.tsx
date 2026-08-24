@@ -1,5 +1,6 @@
 import type { IndicatorDef } from "../types";
 import { PALETTE, fmt } from "../utils/scale";
+import { useLang } from "../i18n";
 
 interface Props {
   thresholds: number[];
@@ -11,12 +12,13 @@ interface Props {
 }
 
 export default function ColorLegend({ thresholds, def, side, bottom = 34 }: Props) {
+  const { locale, indLabel, indUnit } = useLang();
   if (thresholds.length === 0) return null;
   const n = thresholds.length + 1;
   const colors = PALETTE.slice(0, n);
   const dec = def.decimals ?? 0;
-  const min = fmt(thresholds[0], def.unit, dec);
-  const max = fmt(thresholds[thresholds.length - 1], def.unit, dec);
+  const min = fmt(thresholds[0], indUnit(def.unit), dec, locale);
+  const max = fmt(thresholds[thresholds.length - 1], indUnit(def.unit), dec, locale);
   return (
     <div
       style={{
@@ -34,7 +36,7 @@ export default function ColorLegend({ thresholds, def, side, bottom = 34 }: Prop
     >
       <div style={{ fontSize: 11, fontWeight: 700, color: "#334155", marginBottom: 5 }}>
         {side ? `${side} · ` : ""}
-        {def.label} · {def.year}
+        {indLabel(def.key)} · {def.year}
       </div>
       <div style={{ display: "flex", gap: 2 }}>
         {colors.map((c, i) => (

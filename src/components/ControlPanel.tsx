@@ -1,8 +1,9 @@
 import { useState } from "react";
 import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
+import { LANGS, useLang, type Lang } from "../i18n";
 
-const APP_VERSION = "2026.08.023-pre";
+export const APP_VERSION = "2026.08.023-pre";
 
 interface Props {
   mode: ViewMode;
@@ -36,10 +37,10 @@ interface Props {
   mobile: boolean;
 }
 
-const MODES: { value: ViewMode; label: string; title: string }[] = [
-  { value: "simple", label: "Simple", title: "Une seule carte" },
-  { value: "dual", label: "Comparer", title: "Deux cartes synchronisées" },
-  { value: "ratio", label: "Ratio", title: "Rapport entre deux indicateurs" },
+const MODES: { value: ViewMode; labelKey: string; titleKey: string }[] = [
+  { value: "simple", labelKey: "mode.simple", titleKey: "mode.simple.title" },
+  { value: "dual", labelKey: "mode.dual", titleKey: "mode.dual.title" },
+  { value: "ratio", labelKey: "mode.ratio", titleKey: "mode.ratio.title" },
 ];
 
 const btn = (active: boolean): React.CSSProperties => ({
@@ -95,6 +96,30 @@ export default function ControlPanel({
   mobile,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const { t, lang, setLang, indLabel } = useLang();
+  const langSel = (
+    <select
+      value={lang}
+      onChange={(e) => setLang(e.target.value as Lang)}
+      aria-label={t("disclaimer.lang")}
+      title={t("disclaimer.lang")}
+      style={{
+        padding: "4px 6px",
+        borderRadius: 8,
+        border: "1px solid #334155",
+        background: "#1e293b",
+        color: "#e2e8f0",
+        fontSize: 11.5,
+        cursor: "pointer",
+      }}
+    >
+      {LANGS.map((l) => (
+        <option key={l.code} value={l.code}>
+          {l.flag} {l.name}
+        </option>
+      ))}
+    </select>
+  );
   const multi = mode === "dual" || mode === "ratio";
   const synced = mode === "dual" && syncYears && commonYears.length > 0;
   if (mobile && !open) {
@@ -132,11 +157,11 @@ export default function ControlPanel({
         >
           🇱🇺{" "}
           <span style={{ color: "#38bdf8" }}>
-            {INDICATORS.find((d) => d.key === active)?.label ?? ""}
+            {indLabel(active)}
           </span>
         </div>
         <div style={{ fontSize: 12, color: "#94a3b8", flexShrink: 0, marginLeft: 10 }}>
-          Réglages <span style={{ fontSize: 10 }}>▲</span>
+          {t("panel.settings")} <span style={{ fontSize: 10 }}>▲</span>
         </div>
       </div>
     );
@@ -187,26 +212,29 @@ export default function ControlPanel({
           <div style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc" }}>
             🇱🇺 LuxMap
           </div>
-          <div style={{ fontSize: 11, color: "#94a3b8" }}>Données ouvertes du Luxembourg</div>
+          <div style={{ fontSize: 11, color: "#94a3b8" }}>{t("ui.subtitle")}</div>
         </div>
-        {mobile && (
-          <button
-            onClick={() => setOpen(false)}
-            aria-label="Fermer"
-            style={{
-              border: "none",
-              borderRadius: 8,
-              width: 32,
-              height: 32,
-              fontSize: 15,
-              cursor: "pointer",
-              background: "#1e293b",
-              color: "#cbd5e1",
-            }}
-          >
-            ✕
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {langSel}
+          {mobile && (
+            <button
+              onClick={() => setOpen(false)}
+              aria-label={t("panel.close")}
+              style={{
+                border: "none",
+                borderRadius: 8,
+                width: 32,
+                height: 32,
+                fontSize: 15,
+                cursor: "pointer",
+                background: "#1e293b",
+                color: "#cbd5e1",
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {!mobile && (
@@ -214,11 +242,11 @@ export default function ControlPanel({
           {MODES.map((m) => (
             <button
               key={m.value}
-              title={m.title}
+              title={t(m.titleKey)}
               onClick={() => onMode(m.value)}
               style={btn(mode === m.value)}
             >
-              {m.label}
+              {t(m.labelKey)}
             </button>
           ))}
         </div>
@@ -238,8 +266,8 @@ export default function ControlPanel({
         >
           <button
             onClick={onPlay}
-            aria-label={playing ? "Pause" : "Lecture"}
-            title={playing ? "Pause" : "Lecture automatique"}
+            aria-label={playing ? t("play.pause") : t("play.play")}
+            title={playing ? t("play.pause") : t("play.auto")}
             style={{
               border: "none",
               borderRadius: 6,
@@ -260,7 +288,7 @@ export default function ControlPanel({
             step={1}
             value={yearA ?? (synced ? commonYears[commonYears.length - 1] : yearsA[yearsA.length - 1])}
             onChange={(e) => onYearA(e.target.value)}
-            aria-label="Année"
+            aria-label={t("slider.year")}
             style={{ flex: 1, accentColor: "#0ea5e9" }}
           />
           <span style={{ fontSize: 12.5, fontWeight: 800, color: "#f8fafc", minWidth: 30, textAlign: "right" }}>
@@ -287,8 +315,8 @@ export default function ControlPanel({
             onChange={(e) => onSyncYears(e.target.checked)}
             style={{ accentColor: "#0ea5e9", cursor: "pointer", width: 14, height: 14 }}
           />
-          🔗 Synchroniser les années
-          <span title="Ne lit que les années où les deux jeux de données existent" style={{ color: "#64748b" }}>
+          🔗 {t("sync.label")}
+          <span title={t("sync.title")} style={{ color: "#64748b" }}>
             (?)
           </span>
         </label>
@@ -314,7 +342,7 @@ export default function ControlPanel({
             step={1}
             value={yearB ?? yearsB[yearsB.length - 1]}
             onChange={(e) => onYearB(e.target.value)}
-            aria-label="Année B"
+            aria-label={t("slider.yearB")}
             style={{ flex: 1, accentColor: "#0ea5e9" }}
           />
           <span style={{ fontSize: 12, fontWeight: 800, color: "#f8fafc", minWidth: 30, textAlign: "right" }}>
@@ -324,7 +352,7 @@ export default function ControlPanel({
       )}
 
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, color: "#64748b", margin: "10px 0 4px" }}>
-        {multi ? "INDICATEUR A" : "INDICATEUR"}
+        {t(multi ? "indicator.A" : "indicator.label")}
       </div>
       <select
         value={active}
@@ -341,7 +369,7 @@ export default function ControlPanel({
       >
         {INDICATORS.map((i) => (
           <option key={i.key} value={i.key}>
-            {i.label} ({i.year})
+            {indLabel(i.key)} ({i.year})
           </option>
         ))}
       </select>
@@ -349,7 +377,7 @@ export default function ControlPanel({
       {multi && (
         <>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, color: "#64748b", margin: "8px 0 4px" }}>
-            INDICATEUR B
+            {t("indicator.B")}
           </div>
           <select
             value={activeB}
@@ -366,7 +394,7 @@ export default function ControlPanel({
           >
             {INDICATORS.map((i) => (
               <option key={i.key} value={i.key}>
-                {i.label} ({i.year})
+                {indLabel(i.key)} ({i.year})
               </option>
             ))}
           </select>
@@ -391,7 +419,7 @@ export default function ControlPanel({
             onChange={(e) => onAggMode(e.target.checked ? "canton" : "none")}
             style={{ accentColor: "#0ea5e9", cursor: "pointer", width: 14, height: 14 }}
           />
-          🗂 Regrouper par cantons / circonscriptions
+          🗂 {t("agg.label")}
         </label>
       )}
 
@@ -400,20 +428,20 @@ export default function ControlPanel({
           <select
             value={aggMode}
             onChange={(e) => onAggMode(e.target.value as AggMode)}
-            aria-label="Découpage"
+            aria-label={t("agg.split")}
             style={selStyle}
           >
-            <option value="canton">Cantons</option>
-            <option value="circonscription">Circonscriptions</option>
+            <option value="canton">{t("agg.cantons")}</option>
+            <option value="circonscription">{t("agg.circs")}</option>
           </select>
           <select
             value={aggStat}
             onChange={(e) => onAggStat(e.target.value as AggStat)}
-            aria-label="Statistique"
+            aria-label={t("agg.stat")}
             style={selStyle}
           >
-            <option value="median">Médiane</option>
-            <option value="mean">Moyenne</option>
+            <option value="median">{t("agg.median")}</option>
+            <option value="mean">{t("agg.mean")}</option>
           </select>
         </div>
       )}
@@ -428,7 +456,7 @@ export default function ControlPanel({
         }}
       >
         <span>
-          {unitCount} {unitLabel} · {withData} avec données
+          {t("count.units", { n: unitCount, units: unitLabel, m: withData })}
         </span>
         <span style={{ color: "#475569" }}>v{APP_VERSION}</span>
       </div>
@@ -436,8 +464,8 @@ export default function ControlPanel({
       <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
         <button
           onClick={onInfo}
-          aria-label="Sources des données"
-          title="Voir les sources des données"
+          aria-label={t("info.aria")}
+          title={t("info.title")}
           style={{
             flex: 1,
             padding: "7px 8px",
@@ -450,14 +478,14 @@ export default function ControlPanel({
             cursor: "pointer",
           }}
         >
-          ℹ️ Sources
+          ℹ️ {t("info.btn")}
         </button>
         {!mobile && (
           <button
             onClick={onExport}
             disabled={exporting}
-            aria-label="Exporter en PNG"
-            title="Exporter la carte en PNG"
+            aria-label={t("export.aria")}
+            title={t("export.title")}
           style={{
             flex: 1,
             padding: "7px 8px",

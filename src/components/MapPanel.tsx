@@ -3,6 +3,7 @@ import L from "leaflet";
 import { GeoJSON, MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import type { IndicatorDef, IndicatorKey } from "../types";
 import { colorFor, defOf, fmt } from "../utils/scale";
+import { useLang } from "../i18n";
 import type { SyncState } from "../App";
 
 const BOUNDS = L.latLngBounds([49.4, 5.72], [50.2, 6.54]);
@@ -82,13 +83,18 @@ function polygonCentroid(
 }
 
 /** "▲ +4,2 %" / "▼ −1,8 %" HTML span with direction color. */
-function evoHtml(pct: number, prevYear: string): string {
+function evoHtml(
+  pct: number,
+  prevYear: string,
+  locale: string,
+  t: (k: string, v?: Record<string, string | number>) => string,
+): string {
   const up = pct > 0;
   const color = up ? "#16a34a" : pct < 0 ? "#dc2626" : "#64748b";
   const arrow = up ? "▲" : pct < 0 ? "▼" : "•";
   const sign = pct > 0 ? "+" : "";
-  const val = pct.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
-  return `<span style="color:${color};font-weight:700">${arrow} ${sign}${val} %</span> <span style="color:#94a3b8">(vs ${prevYear})</span>`;
+  const val = pct.toLocaleString(locale, { maximumFractionDigits: 1 });
+  return `<span style="color:${color};font-weight:700">${arrow} ${sign}${val} %</span> <span style="color:#94a3b8">(${t("evo.vs", { year: prevYear })})</span>`;
 }
 
 function escapeHtml(s: string): string {
@@ -106,12 +112,16 @@ function tooltipHtml(
   def: IndicatorDef,
   pct: number | undefined,
   prevYear: string | undefined,
+  indLabel: (k: string) => string,
+  indUnit: (u: string) => string,
+  locale: string,
+  t: (k: string, v?: Record<string, string | number>) => string,
 ): string {
   const evoLine =
-    pct === undefined || prevYear === undefined ? "" : `<br/>${evoHtml(pct, prevYear)}`;
+    pct === undefined || prevYear === undefined ? "" : `<br/>${evoHtml(pct, prevYear, locale, t)}`;
   return (
-    `<b>${escapeHtml(name)}</b><br/>${escapeHtml(def.label)} : ` +
-    `${fmt(value, def.unit, def.decimals ?? 0)} ` +
+    `<b>${escapeHtml(name)}</b><br/>${escapeHtml(indLabel(def.key))} : ` +
+    `${fmt(value, indUnit(def.unit), def.decimals ?? 0, locale)} ` +
     `<span style="color:#94a3b8">(${def.year})</span>${evoLine}`
   );
 }
@@ -216,6 +226,7 @@ export default function MapPanel({
   geoStamp,
   evo,
 }: Props) {
+  const { t, locale, indLabel, indUnit } = useLang();
   const activeDef = def ?? defOf(active);
   // La clé ne change QUE si la géométrie change (commune ↔ canton ↔ circonscription).
   // Les changements de couleur, de sélection et d'année sont appliqués en place
@@ -244,10 +255,10 @@ export default function MapPanel({
       const pct = evo ? evo.map[id] : undefined;
       (layer as L.Path).setStyle(featureStyle(value, thresholds, id === selected));
       (layer as L.Layer).setTooltipContent(
-        tooltipHtml(name, value, activeDef, pct, evo?.prevYear),
+        tooltipHtml(name, value, activeDef, pct, evo?.prevYear, indLabel, indUnit, locale, t),
       );
     });
-  }, [thresholds, selected, valueOf, activeDef, evo, keyField, nameField]);
+  }, [thresholds, selected, valueOf, activeDef, evo, keyField, nameField, indLabel, indUnit, locale, t]);
 
   return (
     <MapContainer
@@ -279,7 +290,7 @@ export default function MapPanel({
           const name = String(feature.properties[nameField] ?? id);
           const pct = evo ? evo.map[id] : undefined;
           layer.bindTooltip(
-            tooltipHtml(name, valueOf(id), activeDef, pct, evo?.prevYear),
+            tooltipHtml(name, valueOf(id), activeDef, pct, evo?.prevYear, indLabel, indUnit, locale, t),
             { sticky: true, className: "lux-tooltip" },
           );
           layer.on("click", () => onSelect(id));
@@ -296,7 +307,7 @@ export default function MapPanel({
           const color = up ? "#16a34a" : pct < 0 ? "#dc2626" : "#64748b";
           const arrow = up ? "▲" : pct < 0 ? "▼" : "•";
           const sign = pct > 0 ? "+" : "";
-          const label = `${arrow} ${sign}${pct.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
+          const label = `${arrow} ${sign}${pct.toLocaleString(locale, { maximumFractionDigits: 1 })} %`;
           return (
             <Marker
               key={`evo-${geoStamp}-${id}`}
