@@ -120,9 +120,8 @@ export default function App() {
   const currentYearA = useMemo(() => {
     if (yearsA.length === 0) return null;
     if (yearA && yearsA.includes(yearA)) return yearA;
-    // lecture mode always starts at the OLDEST year (then just press play)
-    return mode === "lecture" ? yearsA[0] : yearsA[yearsA.length - 1];
-  }, [yearsA, yearA, mode]);
+    return yearsA[yearsA.length - 1];
+  }, [yearsA, yearA]);
 
   const yearsB = useMemo(
     () => Object.keys((seriesData as SeriesData)[activeB] ?? {}).sort(),
@@ -174,8 +173,6 @@ export default function App() {
     return () => clearInterval(id);
   }, [playing, yearsA]);
 
-  const activeHasSeries = yearsA.length > 0;
-
   const ratioValueOf = useCallback(
     (lau2: string): number | undefined => {
       const a = valueOfKey(lau2, active);
@@ -198,7 +195,6 @@ export default function App() {
   const changeMode = useCallback((m: ViewMode) => {
     setMode(m);
     setSync(null);
-    if (m === "lecture") setYearA(null); // lecture always starts at the oldest year
   }, []);
 
   const withData =
@@ -320,7 +316,6 @@ export default function App() {
         onExport={exportPng}
         exporting={exporting}
         onInfo={() => setShowInfo(true)}
-        hasSeries={activeHasSeries}
         yearsA={yearsA}
         yearA={currentYearA}
         onYearA={setYearA}

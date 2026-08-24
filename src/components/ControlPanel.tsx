@@ -1,7 +1,7 @@
 import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.010";
+const APP_VERSION = "2026.08.012";
 
 interface Props {
   mode: ViewMode;
@@ -15,7 +15,6 @@ interface Props {
   onExport: () => void;
   exporting: boolean;
   onInfo: () => void;
-  hasSeries: boolean;
   yearsA: string[];
   yearA: string | null;
   onYearA: (y: string) => void;
@@ -30,10 +29,9 @@ const MODES: { value: ViewMode; label: string; title: string }[] = [
   { value: "simple", label: "Simple", title: "Une seule carte" },
   { value: "dual", label: "Comparer", title: "Deux cartes synchronisées" },
   { value: "ratio", label: "Ratio", title: "Rapport entre deux indicateurs" },
-  { value: "lecture", label: "Lecture", title: "Évolution dans le temps (indicateurs avec série historique)" },
 ];
 
-const btn = (active: boolean, disabled = false): React.CSSProperties => ({
+const btn = (active: boolean): React.CSSProperties => ({
   flex: 1,
   padding: "6px 4px",
   borderRadius: 7,
@@ -42,8 +40,7 @@ const btn = (active: boolean, disabled = false): React.CSSProperties => ({
   fontWeight: 700,
   background: active ? "#0ea5e9" : "#1e293b",
   color: active ? "#082f49" : "#94a3b8",
-  cursor: disabled ? "not-allowed" : "pointer",
-  opacity: disabled ? 0.45 : 1,
+  cursor: "pointer",
 });
 
 export default function ControlPanel({
@@ -58,7 +55,6 @@ export default function ControlPanel({
   onExport,
   exporting,
   onInfo,
-  hasSeries,
   yearsA,
   yearA,
   onYearA,
@@ -99,8 +95,7 @@ export default function ControlPanel({
             key={m.value}
             title={m.title}
             onClick={() => onMode(m.value)}
-            disabled={m.value === "lecture" && !hasSeries}
-            style={btn(mode === m.value, m.value === "lecture" && !hasSeries)}
+            style={btn(mode === m.value)}
           >
             {m.label}
           </button>

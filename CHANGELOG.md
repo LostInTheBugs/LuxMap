@@ -2,6 +2,12 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.012] — 2026-08-24
+
+### Removed
+- **Lecture mode button**: now redundant — the year slider + play/pause is
+  available directly in Simple (and Comparer) modes
+
 ## [2026.08.010] — 2026-08-24
 
 ### Changed
