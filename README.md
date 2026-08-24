@@ -1,6 +1,6 @@
 # LuxMap
 
-Interactive choropleth map of Luxembourg's 102 communes, visualizing open data from
+Interactive choropleth map of Luxembourg's 100 communes, visualizing open data from
 [data.public.lu](https://data.public.lu) and other Luxembourg open-data sources — air
 quality, sunshine, population density, housing prices, cost of living and employment —
 with side-by-side comparisons between indicators.
