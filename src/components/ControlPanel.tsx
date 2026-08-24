@@ -70,7 +70,7 @@ export default function ControlPanel({
         top: 12,
         left: 12,
         zIndex: 2000,
-        width: 238,
+        width: 252,
         background: "rgba(15,23,42,0.92)",
         border: "1px solid #1e293b",
         borderRadius: 14,
@@ -196,9 +196,19 @@ export default function ControlPanel({
         </>
       )}
 
-      <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>
-        {communes} communes · {withData} avec données
-        <span style={{ float: "right", color: "#475569" }}>v{APP_VERSION}</span>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: 12,
+          color: "#94a3b8",
+          marginTop: 10,
+        }}
+      >
+        <span>
+          {communes} communes · {withData} avec données
+        </span>
+        <span style={{ color: "#475569" }}>v{APP_VERSION}</span>
       </div>
 
       <div style={{ display: "flex", gap: 6, marginTop: 10 }}>

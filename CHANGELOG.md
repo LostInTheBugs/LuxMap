@@ -2,6 +2,13 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.008-c1] — 2026-08-24
+
+### Fixed
+- Control panel degraded: the `float: right` version badge squeezed the
+  Sources/PNG button row below it (fit-content width → two-line buttons).
+  Replaced with a flex `space-between` row and widened the panel to 252 px
+
 ## [2026.08.008] — 2026-08-24
 
 ### Added
