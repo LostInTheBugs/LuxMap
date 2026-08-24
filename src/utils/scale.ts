@@ -83,7 +83,11 @@ export const defOf = (key: IndicatorKey): IndicatorDef =>
 
 /** Quantile thresholds over sorted values (PALETTE.length - 1 boundaries). */
 export function computeThresholds(values: number[]): number[] {
-  if (values.length < PALETTE.length) return [];
+  if (values.length === 0) return [];
+  // d3 quantiles work from 1 value up (with fewer values than colors, some
+  // boundaries repeat — colors then cover contiguous bands; with exactly 1
+  // value every feature gets the first color). Keeping a min-count guard
+  // here broke the 4-value circonscription groups (all grey, empty legend).
   const q = scaleQuantile<string>().domain(values).range(PALETTE);
   return q.quantiles();
 }

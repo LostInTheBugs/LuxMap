@@ -2,6 +2,14 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.016-c1] — 2026-08-24
+
+### Fixed
+- Circonscription view showed all groups grey with an empty legend:
+  `computeThresholds` required ≥ 7 values (palette size), but there are only
+  4 circonscriptions → empty thresholds. The min-count guard is removed (d3
+  quantiles work from 1 value up)
+
 ## [2026.08.016] — 2026-08-24
 
 ### Added
