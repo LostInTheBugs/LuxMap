@@ -40,6 +40,10 @@ body,
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   transform: translate(-50%, -50%);
   pointer-events: none;
+  /* Leaflet sets a default 12x12 iconSize inline — force auto-sizing so the
+     label pill wraps its text (centered on the centroid via the transform). */
+  width: max-content !important;
+  height: auto !important;
 }
 
 .leaflet-popup-content-wrapper {

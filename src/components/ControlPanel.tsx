@@ -1,7 +1,7 @@
 import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.018";
+const APP_VERSION = "2026.08.018-c1";
 
 interface Props {
   mode: ViewMode;

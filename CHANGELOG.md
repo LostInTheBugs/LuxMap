@@ -2,6 +2,15 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.018-c1] — 2026-08-24
+
+### Fixed
+- Evolution labels were not visible: the marker position was passed as
+  [lng, lat] instead of [lat, lng] (labels landed off-map, e.g. over the
+  Atlantic) and Leaflet's default 12×12 iconSize collapsed the pill to 14×12
+  px. Position is now [lat, lng] and `.lux-evo` forces `width: max-content`
+  (12 labels, each ~65×21 px, centered on the group centroid)
+
 ## [2026.08.018] — 2026-08-24
 
 ### Added

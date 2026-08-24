@@ -256,12 +256,11 @@ export default function MapPanel({
           return (
             <Marker
               key={`evo-${geoStamp}-${id}`}
-              position={c}
+              position={[c[1], c[0]]}
               interactive={false}
               icon={L.divIcon({
                 className: "lux-evo",
                 html: `<span style="color:${color}">${label}</span>`,
-                iconSize: [0, 0],
               })}
             />
           );
