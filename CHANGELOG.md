@@ -2,6 +2,19 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.024] — 2026-08-24
+
+### Added
+- **First stable release.** 12 indicators: population density, population
+  (1821–2026), natural balance (1987–2025), net migration (1990–2025),
+  unemployment, road accidents (by canton), O₃ days, median age, foreign
+  residents, advertised rents and prices (apartments/houses)
+- **POC disclaimer** shown on first visit (dismissed per browser)
+- **Multilingual UI**: 🇫🇷 Français, 🇬🇧 English, 🇩🇪 Deutsch, 🇵🇹 Português,
+  🇱🇺 Lëtzebuergesch — language detected from the browser, selectable in the
+  disclaimer and in the control panel, persisted in localStorage
+- Release workflow supports `-pre` tags (prerelease GitHub releases)
+
 ## [2026.08.023-pre] — 2026-08-24
 
 ### Added

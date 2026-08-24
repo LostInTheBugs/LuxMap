@@ -5,7 +5,7 @@ Interactive choropleth map of Luxembourg's 100 communes, visualizing open data f
 quality, sunshine, population density, housing prices, cost of living and employment —
 with side-by-side comparisons between indicators.
 
-**Version:** [2026.08.023-pre](https://github.com/LostInTheBugs/LuxMap/releases)
+**Version:** [2026.08.024](https://github.com/LostInTheBugs/LuxMap/releases)
 
 ## ✨ Features
 

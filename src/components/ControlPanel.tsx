@@ -3,7 +3,7 @@ import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 import { LANGS, useLang, type Lang } from "../i18n";
 
-export const APP_VERSION = "2026.08.023-pre";
+export const APP_VERSION = "2026.08.024";
 
 interface Props {
   mode: ViewMode;
