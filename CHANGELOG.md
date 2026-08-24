@@ -2,6 +2,33 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.021] — 2026-08-24
+
+### Performance
+- Couche GeoJSON mise à jour en place au lieu d'être reconstruite à chaque clic
+  ou changement d'année (les 100 polygones ne sont plus recréés 2 fois/seconde
+  pendant la lecture automatique)
+- `html2canvas` chargé en import dynamique : ~200 Ko retirés du bundle initial
+- Coordonnées GeoJSON arrondies à 5 décimales et fichiers minifiés
+  (`communes.geojson` : 787 Ko → 486 Ko)
+- `indicators.json` et `series.json` servis comme fichiers statiques au lieu
+  d'être inlinés dans le bundle
+- En-têtes `Cache-Control: immutable` sur les assets hashés
+
+### Corrections
+- Anneaux dégénérés ignorés dans le calcul de centroïde (étiquettes d'évolution
+  manquantes sur certains regroupements)
+- Nombre de communes corrigé dans le README (100, et non 102)
+- Suppression du doublon `src/data/series.json` / `data/processed/series.json`
+
+### Infrastructure
+- Port d'écoute aligné sur la convention projet : 3003 → 8008
+- ESLint + workflow CI (build sur push et PR)
+- Workflow de release automatique sur tag
+- `react-leaflet` mis à jour en v5 (support officiel de React 19)
+- Favicon, meta description et balises OpenGraph
+- En-têtes de sécurité nginx
+
 ## [2026.08.020] — 2026-08-24
 
 ### Added
