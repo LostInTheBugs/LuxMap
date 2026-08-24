@@ -1,7 +1,7 @@
 import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.004-c3";
+const APP_VERSION = "2026.08.006";
 
 interface Props {
   mode: ViewMode;
@@ -12,6 +12,8 @@ interface Props {
   onActiveB: (k: IndicatorKey) => void;
   communes: number;
   withData: number;
+  onExport: () => void;
+  exporting: boolean;
 }
 
 const MODES: { value: ViewMode; label: string; title: string }[] = [
@@ -29,6 +31,8 @@ export default function ControlPanel({
   onActiveB,
   communes,
   withData,
+  onExport,
+  exporting,
 }: Props) {
   const multi = mode !== "simple";
   return (
@@ -152,6 +156,27 @@ export default function ControlPanel({
         {communes} communes · {withData} avec données
         <span style={{ float: "right", color: "#475569" }}>v{APP_VERSION}</span>
       </div>
+
+      <button
+        onClick={onExport}
+        disabled={exporting}
+        aria-label="Exporter en PNG"
+        title="Exporter la carte en PNG"
+        style={{
+          width: "100%",
+          marginTop: 10,
+          padding: "7px 8px",
+          borderRadius: 8,
+          border: "1px solid #334155",
+          background: exporting ? "#1e293b" : "#0ea5e9",
+          color: exporting ? "#64748b" : "#082f49",
+          fontSize: 13,
+          fontWeight: 700,
+          cursor: exporting ? "wait" : "pointer",
+        }}
+      >
+        {exporting ? "⏳ Export…" : "📷 Exporter en PNG"}
+      </button>
     </div>
   );
 }

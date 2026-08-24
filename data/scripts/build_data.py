@@ -88,6 +88,22 @@ def load_prix() -> dict[str, dict[str, float]]:
         return json.load(f)
 
 
+def load_loyers() -> dict[str, dict[str, float]]:
+    with open(os.path.join(PROC, "loyers.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_age_median() -> dict[str, float]:
+    with open(os.path.join(PROC, "age_median.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_etrangers() -> dict[str, float]:
+    """{commune_name (normalised): % foreign residents} — RNPP, 30/09/2021."""
+    with open(os.path.join(PROC, "etrangers.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
 def main() -> None:
     with open(os.path.join(RAW, "limadmin.geojson"), encoding="utf-8") as f:
         gj = json.load(f)
@@ -103,6 +119,10 @@ def main() -> None:
         key: {norm(n): v for n, v in d.items() if norm(n) not in BLACKLIST}
         for key, d in prix.items()
     }
+    loyers = load_loyers()
+    loyer_by_norm = {norm(n): v for n, v in loyers.get("appart", {}).items() if norm(n) not in BLACKLIST}
+    age_median = load_age_median()
+    etrangers_by_norm = load_etrangers()
 
     indicators = []
     unmatched = {k: set() for k in prix}
@@ -117,6 +137,14 @@ def main() -> None:
             row["chomage"] = round(chom, 1)
         if lau2 in o3:
             row["o3_days"] = o3[lau2]
+        if lau2 in age_median:
+            row["age_median"] = age_median[lau2]
+        etr = etrangers_by_norm.get(norm(name))
+        if etr is not None:
+            row["etrangers"] = round(etr, 1)
+        loyer = loyer_by_norm.get(norm(name))
+        if loyer is not None:
+            row["loyer_appart"] = round(loyer, 2)
         for key in prix_by_norm:
             v = prix_by_norm[key].get(norm(name))
             if v is not None:
@@ -129,7 +157,7 @@ def main() -> None:
     out = []
     for row in sorted(indicators, key=lambda r: r["commune"]):
         clean = {"lau2": row["lau2"], "commune": row["commune"], "canton": row["canton"]}
-        for key in ("density", "chomage", "o3_days", "prix_appart", "prix_maison"):
+        for key in ("density", "chomage", "o3_days", "age_median", "etrangers", "loyer_appart", "prix_appart", "prix_maison"):
             if key in row:
                 clean[key] = row[key]
         out.append(clean)
@@ -161,6 +189,9 @@ def main() -> None:
     print(f"  density: {sum('density' in r for r in out)}")
     print(f"  chomage: {sum('chomage' in r for r in out)}")
     print(f"  o3_days: {sum('o3_days' in r for r in out)}")
+    print(f"  age_median: {sum('age_median' in r for r in out)}")
+    print(f"  etrangers: {sum('etrangers' in r for r in out)}")
+    print(f"  loyer_appart: {sum('loyer_appart' in r for r in out)}")
     print(f"  prix_appart: {sum('prix_appart' in r for r in out)}")
     print(f"  prix_maison: {sum('prix_maison' in r for r in out)}")
     for k, names in unmatched.items():

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
+import html2canvas from "html2canvas";
 import MapPanel from "./components/MapPanel";
 import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
@@ -31,6 +32,8 @@ export default function App() {
   const [activeB, setActiveB] = useState<IndicatorKey>("prix_maison");
   const [selected, setSelected] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncState | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const captureRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   useEffect(() => {
@@ -131,6 +134,26 @@ export default function App() {
   const withData =
     mode === "ratio" ? ratioValues.length : valuesOf(active).length;
 
+  const exportPng = useCallback(async () => {
+    const el = captureRef.current;
+    if (!el || exporting) return;
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const a = document.createElement("a");
+      a.download = `luxmap-${new Date().toISOString().slice(0, 10)}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting]);
+
   // Re-fit both maps to the country bounds whenever the layout changes
   // (simple/ratio = full width, dual = half width). Without this, map A keeps
   // its full-width zoom when the split happens → the two maps are misaligned.
@@ -144,6 +167,8 @@ export default function App() {
   return (
     <div style={{ position: "fixed", inset: 0 }}>
       <div
+        ref={captureRef}
+        className="lux-capture"
         style={{
           position: "absolute",
           inset: 0,
@@ -209,6 +234,8 @@ export default function App() {
         onActiveB={setActiveB}
         communes={data.length}
         withData={withData}
+        onExport={exportPng}
+        exporting={exporting}
       />
 
       <footer
@@ -300,6 +327,9 @@ const INDICATOR_ROWS: [IndicatorKey, string, string][] = [
   ["density", "Densité", "hab/km²"],
   ["chomage", "Chômage", "%"],
   ["o3_days", "Jours O₃", "j"],
+  ["age_median", "Âge médian", "ans"],
+  ["etrangers", "Étrangers", "%"],
+  ["loyer_appart", "Loyer appart.", "€/m²/mois"],
   ["prix_appart", "Appartement", "€/m²"],
   ["prix_maison", "Maison", "€/m²"],
 ];

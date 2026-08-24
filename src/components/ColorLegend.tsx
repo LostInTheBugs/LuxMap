@@ -12,8 +12,8 @@ export default function ColorLegend({ thresholds, def, side }: Props) {
   const n = thresholds.length + 1;
   const colors = PALETTE.slice(0, n);
   const dec = def.decimals ?? 0;
-  const min = fmt(thresholds[0], def.unit, dec).split(" ")[0];
-  const max = fmt(thresholds[thresholds.length - 1], def.unit, dec).split(" ")[0];
+  const min = fmt(thresholds[0], def.unit, dec);
+  const max = fmt(thresholds[thresholds.length - 1], def.unit, dec);
   return (
     <div
       style={{

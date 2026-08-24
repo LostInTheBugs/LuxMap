@@ -2,6 +2,20 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.006] — 2026-08-24
+
+### Added
+- Median age per commune (RNPP age pyramid, 01-07-2026) — 64/100 communes
+- Share of foreign residents per commune (RNPP nationality series, 30/09/2021)
+  — 97/100
+- Announced apartment rents per commune, €/m²/month (2025-26,
+  data.public.lu "Loyers annoncés") — 35/100
+- **PNG export** button (html2canvas, captures the map + legend at 2×)
+
+### Fixed
+- Legend scale now shows the unit on min/max values (e.g. "59 hab/km²" —
+  "465 hab/km²")
+
 ## [2026.08.004-c3] — 2026-08-23
 
 ### Fixed
