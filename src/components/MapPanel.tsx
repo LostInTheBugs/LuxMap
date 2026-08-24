@@ -98,6 +98,37 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/** Contenu HTML du tooltip d'une entité. */
+function tooltipHtml(
+  name: string,
+  value: number | undefined,
+  def: IndicatorDef,
+  pct: number | undefined,
+  prevYear: string | undefined,
+): string {
+  const evoLine =
+    pct === undefined || prevYear === undefined ? "" : `<br/>${evoHtml(pct, prevYear)}`;
+  return (
+    `<b>${escapeHtml(name)}</b><br/>${escapeHtml(def.label)} : ` +
+    `${fmt(value, def.unit, def.decimals ?? 0)} ` +
+    `<span style="color:#94a3b8">(${def.year})</span>${evoLine}`
+  );
+}
+
+/** Style d'un polygone selon sa valeur et son état de sélection. */
+function featureStyle(
+  value: number | undefined,
+  thresholds: number[],
+  isSelected: boolean,
+): L.PathOptions {
+  return {
+    fillColor: colorFor(value, thresholds),
+    fillOpacity: 0.85,
+    weight: isSelected ? 2.5 : 0.8,
+    color: isSelected ? "#0ea5e9" : "#64748b",
+  };
+}
+
 /**
  * Fits the map to the country bounds whenever `refitKey` changes — both maps
  * re-fit on layout changes (simple/ratio = full width, dual = half width) so
@@ -185,7 +216,11 @@ export default function MapPanel({
   evo,
 }: Props) {
   const activeDef = def ?? defOf(active);
-  const geoKey = `${side}-${keyField}-${geoStamp}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
+  // La clé ne change QUE si la géométrie change (commune ↔ canton ↔ circonscription).
+  // Les changements de couleur, de sélection et d'année sont appliqués en place
+  // par l'effet ci-dessous, sans reconstruire les 100 polygones.
+  const geoKey = `${side}-${keyField}-${geoStamp}`;
+  const geoRef = useRef<L.GeoJSON | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -194,6 +229,24 @@ export default function MapPanel({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onSelect]);
+
+  // Applique couleurs, sélection et tooltips sur les couches existantes.
+  useEffect(() => {
+    const group = geoRef.current;
+    if (!group) return;
+    group.eachLayer((layer) => {
+      const f = (layer as L.Layer & { feature?: GeoFeature }).feature;
+      if (!f) return;
+      const id = f.properties[keyField] as string;
+      const name = String(f.properties[nameField] ?? id);
+      const value = valueOf(id);
+      const pct = evo ? evo.map[id] : undefined;
+      (layer as L.Path).setStyle(featureStyle(value, thresholds, id === selected));
+      (layer as L.Layer).setTooltipContent(
+        tooltipHtml(name, value, activeDef, pct, evo?.prevYear),
+      );
+    });
+  }, [thresholds, selected, valueOf, activeDef, evo, keyField, nameField]);
 
   return (
     <MapContainer
@@ -213,32 +266,22 @@ export default function MapPanel({
       <AutoSize />
       <GeoJSON
         key={geoKey}
+        ref={geoRef}
         data={geo}
         style={(feature) => {
           if (!feature) return {};
-          const id = feature.properties[keyField];
-          const isSel = id === selected;
-          return {
-            fillColor: colorFor(valueOf(id as string), thresholds),
-            fillOpacity: 0.85,
-            weight: isSel ? 2.5 : 0.8,
-            color: isSel ? "#0ea5e9" : "#64748b",
-          };
+          const id = feature.properties[keyField] as string;
+          return featureStyle(valueOf(id), thresholds, id === selected);
         }}
         onEachFeature={(feature, layer) => {
-          const id = feature.properties[keyField];
-          const name = feature.properties[nameField] ?? id;
-          const v = valueOf(id as string);
-          const pct = evo ? evo.map[id as string] : undefined;
-          const evoLine =
-            pct === undefined || !evo
-              ? ""
-              : `<br/>${evoHtml(pct, evo.prevYear)}`;
+          const id = feature.properties[keyField] as string;
+          const name = String(feature.properties[nameField] ?? id);
+          const pct = evo ? evo.map[id] : undefined;
           layer.bindTooltip(
-            `<b>${escapeHtml(String(name))}</b><br/>${escapeHtml(activeDef.label)} : ${fmt(v, activeDef.unit, activeDef.decimals ?? 0)} <span style="color:#94a3b8">(${activeDef.year})</span>${evoLine}`,
+            tooltipHtml(name, valueOf(id), activeDef, pct, evo?.prevYear),
             { sticky: true, className: "lux-tooltip" },
           );
-          layer.on("click", () => onSelect(id as string));
+          layer.on("click", () => onSelect(id));
         }}
       />
       {evo &&
