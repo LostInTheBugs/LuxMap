@@ -115,6 +115,40 @@ def parse_accidents() -> dict[str, dict[str, int]]:
     return out
 
 
+def parse_commune_series(raw: str, var_dim_id: str, var_id: str) -> dict[str, dict[str, int]]:
+    """{lau2: {year: value}} for one variable of a per-commune flow.
+
+    Generic for DF_X024 (VARIABLE=A03 natural balance) and DF_X025
+    (POP_MOVEMENT=M003 net migration): the CANTON dimension mixes communes
+    (4-digit LAU2), cantons (C0X) and the total (T) — communes only.
+    """
+    st, ds = load_jsondata(os.path.join(RAW, raw))
+    dims = st["dimensions"]["series"]
+    var_dim = next(s for s in dims if s["id"] == var_dim_id)
+    canton_dim = next(s for s in dims if s["id"] == "CANTON")
+    periods = [v["id"] for v in st["dimensions"]["observation"][0]["values"]]
+    var_idx = next(i for i, v in enumerate(var_dim["values"]) if v["id"] == var_id)
+    out: dict[str, dict[str, int]] = {}
+    for sk, sv in ds["series"].items():
+        idx = [int(x) for x in sk.split(":")]
+        vi, ci = idx[1], idx[2]
+        if vi != var_idx:
+            continue
+        code = canton_dim["values"][ci]["id"]
+        if not (len(code) == 4 and code.isdigit()):
+            continue
+        obs = {}
+        for i, o in sv.get("observations", {}).items():
+            v = o[0]
+            if v is not None and int(i) < len(periods):
+                obs[periods[int(i)]] = int(v)
+        if obs:
+            out[code] = obs
+    print(f"{raw} ({var_id}): {len(out)} communes, {len(periods)} années "
+          f"({periods[0]}–{periods[-1]})")
+    return out
+
+
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
     pop = parse_population()
@@ -123,11 +157,17 @@ def main() -> None:
     acc = parse_accidents()
     with open(os.path.join(OUT, "accidents.json"), "w", encoding="utf-8") as f:
         json.dump(acc, f, ensure_ascii=False)
+    natural = parse_commune_series("natural.json", "VARIABLE", "A03")
+    with open(os.path.join(OUT, "natural.json"), "w", encoding="utf-8") as f:
+        json.dump(natural, f, ensure_ascii=False)
+    migration = parse_commune_series("migration.json", "POP_MOVEMENT", "M003")
+    with open(os.path.join(OUT, "migration.json"), "w", encoding="utf-8") as f:
+        json.dump(migration, f, ensure_ascii=False)
     # échantillon
-    sample = sorted(pop)[0]
-    print(f"  ex {sample}: {dict(list(pop[sample].items())[:3])} … {dict(list(pop[sample].items())[-2:])}")
-    s2 = sorted(acc)[0]
-    print(f"  ex {s2}: {dict(list(acc[s2].items())[:2])} … {dict(list(acc[s2].items())[-2:])}")
+    s = sorted(natural)[0]
+    print(f"  ex {s}: {dict(list(natural[s].items())[:3])} … {dict(list(natural[s].items())[-2:])}")
+    s2 = sorted(migration)[0]
+    print(f"  ex {s2}: {dict(list(migration[s2].items())[:3])} … {dict(list(migration[s2].items())[-2:])}")
 
 
 if __name__ == "__main__":

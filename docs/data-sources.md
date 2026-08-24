@@ -11,6 +11,8 @@ Verified against the data.public.lu udata API
 | Housing | **Prix annoncés des logements - Par commune** (also: all-Luxembourg, Luxembourg-Ville per quartier) | ✅ used (XLS 2025-26) |
 | Population density | **Densité de la population par canton et commune (Habitants par km²) 1821 - 2017** | ✅ used (STATEC LUSTAT DF_X020) |
 | Population | **Population par canton et commune au 1er janvier** (STATEC LUSTAT **DF_X021**) | ✅ used (60 millésimes 1821–2026, recensements puis annuel) |
+| Natural balance | **Mouvements naturels de la population par canton et commune** (STATEC LUSTAT **DF_X024**) | ✅ used (variable A03 = naissances − décès, 1987–2025) |
+| Net migration | **Mouvement migratoire de la population par canton et commune** (STATEC LUSTAT **DF_X025**) | ✅ used (variable M003 = arrivées − départs, 1990–2025) |
 | Unemployment | **Population et emploi - Marché du travail - Chômage** → STATEC LUSTAT **DF_X026** (Emploi et chômage par canton et commune) | ✅ used (VARIABLE C6 = taux de chômage %) |
 | Road accidents | **Accidents corporels de circulation routière** → STATEC LUSTAT **DF_X040** (par canton et gravité) | ✅ used (SEVERITY_ACC=_T, 2015–2025, canton → communes) |
 | Air quality | **Ozone - O₃: days with maximum 8h mean values above 120 µg/m³** (AEV, 53 station points, Greater Region) | ✅ used (IDW interpolation → communes) |

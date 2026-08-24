@@ -43,6 +43,22 @@ const SOURCES: SourceEntry[] = [
     url: "https://lustat.statec.lu/rest/data/LU1,DF_X021,1.1/all?format=jsondata",
   },
   {
+    key: "solde_naturel",
+    label: "Excédent naturel",
+    org: "STATEC LUSTAT (DF_X024)",
+    period: "1987–2025",
+    note: "Naissances moins décès par commune de résidence (variable A03). Série temporelle en mode Lecture.",
+    url: "https://lustat.statec.lu/rest/data/LU1,DF_X024,1.1/all?format=jsondata",
+  },
+  {
+    key: "solde_migratoire",
+    label: "Solde migratoire",
+    org: "STATEC LUSTAT (DF_X025)",
+    period: "1990–2025",
+    note: "Arrivées moins départs par commune de résidence (variable M003). Série temporelle en mode Lecture.",
+    url: "https://lustat.statec.lu/rest/data/LU1,DF_X025,1.1/all?format=jsondata",
+  },
+  {
     key: "accidents",
     label: "Accidents de la route (par canton)",
     org: "STATEC LUSTAT (DF_X040)",

@@ -12,6 +12,8 @@ export interface CommuneData {
   prix_maison?: number;
   population?: number;
   accidents?: number;
+  solde_naturel?: number;
+  solde_migratoire?: number;
 }
 
 export type IndicatorKey =
@@ -24,7 +26,9 @@ export type IndicatorKey =
   | "prix_appart"
   | "prix_maison"
   | "population"
-  | "accidents";
+  | "accidents"
+  | "solde_naturel"
+  | "solde_migratoire";
 
 export type ViewMode = "simple" | "dual" | "ratio";
 

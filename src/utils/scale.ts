@@ -29,6 +29,22 @@ export const INDICATORS: IndicatorDef[] = [
     decimals: 0,
   },
   {
+    key: "solde_naturel",
+    label: "Excédent naturel",
+    unit: "pers.",
+    year: "2025",
+    source: "STATEC",
+    decimals: 0,
+  },
+  {
+    key: "solde_migratoire",
+    label: "Solde migratoire",
+    unit: "pers.",
+    year: "2025",
+    source: "STATEC",
+    decimals: 0,
+  },
+  {
     key: "chomage",
     label: "Taux de chômage",
     unit: "%",

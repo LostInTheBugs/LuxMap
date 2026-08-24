@@ -146,8 +146,13 @@ def main() -> None:
     age_median = load_age_median()
     population = load_lustat2("population")
     accidents = load_lustat2("accidents")
-    pop_latest = {lau2: max(by_year, key=lambda y: (by_year[y] is not None, y)) for lau2, by_year in population.items()}
-    acc_latest = {lau2: max(by_year, key=lambda y: (by_year[y] is not None, y)) for lau2, by_year in accidents.items()}
+    natural = load_lustat2("natural")
+    migration = load_lustat2("migration")
+    latest = lambda by_year: max(by_year, key=lambda y: (by_year[y] is not None, y))
+    pop_latest = {lau2: latest(by_year) for lau2, by_year in population.items()}
+    acc_latest = {lau2: latest(by_year) for lau2, by_year in accidents.items()}
+    nat_latest = {lau2: latest(by_year) for lau2, by_year in natural.items()}
+    mig_latest = {lau2: latest(by_year) for lau2, by_year in migration.items()}
     etrangers_by_norm = load_etrangers()
 
     indicators = []
@@ -172,6 +177,10 @@ def main() -> None:
             row["population"] = pop_latest[lau2]
         if lau2 in acc_latest:
             row["accidents"] = acc_latest[lau2]
+        if lau2 in nat_latest:
+            row["solde_naturel"] = nat_latest[lau2]
+        if lau2 in mig_latest:
+            row["solde_migratoire"] = mig_latest[lau2]
         loyer = loyer_by_norm.get(norm(name))
         if loyer is not None:
             row["loyer_appart"] = round(loyer, 2)
@@ -187,7 +196,7 @@ def main() -> None:
     out = []
     for row in sorted(indicators, key=lambda r: r["commune"]):
         clean = {"lau2": row["lau2"], "commune": row["commune"], "canton": row["canton"]}
-        for key in ("density", "chomage", "o3_days", "age_median", "etrangers", "loyer_appart", "prix_appart", "prix_maison", "population", "accidents"):
+        for key in ("density", "chomage", "o3_days", "age_median", "etrangers", "loyer_appart", "prix_appart", "prix_maison", "population", "accidents", "solde_naturel", "solde_migratoire"):
             if key in row:
                 clean[key] = row[key]
         out.append(clean)
@@ -238,6 +247,8 @@ def main() -> None:
     print(f"  prix_maison: {sum('prix_maison' in r for r in out)}")
     print(f"  population: {sum('population' in r for r in out)}")
     print(f"  accidents: {sum('accidents' in r for r in out)}")
+    print(f"  solde_naturel: {sum('solde_naturel' in r for r in out)}")
+    print(f"  solde_migratoire: {sum('solde_migratoire' in r for r in out)}")
     for k, names in unmatched.items():
         print(f"  sans prix ({k}): {len(names)} — {sorted(names)[:12]}")
 

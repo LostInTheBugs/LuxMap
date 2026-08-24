@@ -148,6 +148,10 @@ def main() -> None:
         population = transpose_lau2_series(json.load(f))
     with open(os.path.join(OUT, "accidents.json"), encoding="utf-8") as f:
         accidents = transpose_lau2_series(json.load(f))
+    with open(os.path.join(OUT, "natural.json"), encoding="utf-8") as f:
+        natural = transpose_lau2_series(json.load(f))
+    with open(os.path.join(OUT, "migration.json"), encoding="utf-8") as f:
+        migration = transpose_lau2_series(json.load(f))
 
     series: dict[str, dict[str, dict[str, float]]] = {
         "prix_appart": join_by_name(parse_xlsx_series(os.path.join(RAW, "vente-appartement-2010-2025.xlsx")), lau2),
@@ -156,6 +160,8 @@ def main() -> None:
         "chomage": join_by_name(parse_chomage_series(), lau2),
         "population": population,
         "accidents": accidents,
+        "solde_naturel": natural,
+        "solde_migratoire": migration,
     }
 
     with open(os.path.join(OUT, "series.json"), "w", encoding="utf-8") as f:
