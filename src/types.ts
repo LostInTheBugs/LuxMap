@@ -27,6 +27,26 @@ export type ViewMode = "simple" | "dual" | "ratio";
 /** Multi-year series: indicator key → year → lau2 → value. */
 export type SeriesData = Record<string, Record<string, Record<string, number>>>;
 
+/** Display unit for choropleth coloring: commune, canton or electoral district. */
+export type AggMode = "none" | "canton" | "circonscription";
+export type AggStat = "mean" | "median";
+
+/** Official electoral circonscriptions (loi électorale 2002/2016). */
+export const CIRCONSCRIPTIONS: Record<string, string> = {
+  Luxembourg: "Centre",
+  Capellen: "Centre",
+  Mersch: "Centre",
+  Grevenmacher: "Est",
+  Echternach: "Est",
+  Remich: "Est",
+  Diekirch: "Nord",
+  Clervaux: "Nord",
+  Vianden: "Nord",
+  Wiltz: "Nord",
+  Redange: "Nord",
+  "Esch-sur-Alzette": "Sud",
+};
+
 export interface IndicatorDef {
   key: IndicatorKey;
   label: string;

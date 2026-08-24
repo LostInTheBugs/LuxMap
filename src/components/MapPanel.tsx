@@ -9,7 +9,12 @@ const BOUNDS = L.latLngBounds([49.4, 5.72], [50.2, 6.54]);
 
 interface GeoFeature {
   type: "Feature";
-  properties: { LAU2: string; COMMUNE: string; CANTON: string };
+  properties: {
+    LAU2?: string;
+    COMMUNE?: string;
+    CANTON?: string;
+    CIRCONSCRIPTION?: string;
+  };
   geometry: unknown;
 }
 interface GeoData {
@@ -24,12 +29,18 @@ interface Props {
   def?: IndicatorDef;
   thresholds: number[];
   selected: string | null;
-  valueOf: (lau2: string) => number | undefined;
-  onSelect: (lau2: string | null) => void;
+  valueOf: (key: string) => number | undefined;
+  onSelect: (key: string | null) => void;
   syncEnabled: boolean;
   sync: SyncState | null;
   onSync: (from: string, center: L.LatLng, zoom: number) => void;
   refitKey: number;
+  /** Geometry property carrying the feature id (LAU2 | CANTON | CIRCONSCRIPTION). */
+  keyField: string;
+  /** Geometry property carrying the display name. */
+  nameField: string;
+  /** Increments whenever the geometry data changes (forces a GeoJSON remount). */
+  geoStamp: number;
 }
 
 function escapeHtml(s: string): string {
@@ -121,9 +132,12 @@ export default function MapPanel({
   sync,
   onSync,
   refitKey,
+  keyField,
+  nameField,
+  geoStamp,
 }: Props) {
   const activeDef = def ?? defOf(active);
-  const geoKey = `${side}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
+  const geoKey = `${side}-${keyField}-${geoStamp}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -154,23 +168,24 @@ export default function MapPanel({
         data={geo}
         style={(feature) => {
           if (!feature) return {};
-          const lau2 = feature.properties.LAU2;
-          const isSel = lau2 === selected;
+          const id = feature.properties[keyField];
+          const isSel = id === selected;
           return {
-            fillColor: colorFor(valueOf(lau2), thresholds),
+            fillColor: colorFor(valueOf(id as string), thresholds),
             fillOpacity: 0.85,
             weight: isSel ? 2.5 : 0.8,
             color: isSel ? "#0ea5e9" : "#64748b",
           };
         }}
         onEachFeature={(feature, layer) => {
-          const { LAU2, COMMUNE } = feature.properties;
-          const v = valueOf(LAU2);
+          const id = feature.properties[keyField];
+          const name = feature.properties[nameField] ?? id;
+          const v = valueOf(id as string);
           layer.bindTooltip(
-            `<b>${escapeHtml(COMMUNE)}</b><br/>${escapeHtml(activeDef.label)} : ${fmt(v, activeDef.unit, activeDef.decimals ?? 0)} <span style="color:#94a3b8">(${activeDef.year})</span>`,
+            `<b>${escapeHtml(String(name))}</b><br/>${escapeHtml(activeDef.label)} : ${fmt(v, activeDef.unit, activeDef.decimals ?? 0)} <span style="color:#94a3b8">(${activeDef.year})</span>`,
             { sticky: true, className: "lux-tooltip" },
           );
-          layer.on("click", () => onSelect(LAU2));
+          layer.on("click", () => onSelect(id as string));
         }}
       />
       {syncEnabled && <SyncController sync={sync} side={side} onSync={onSync} />}

@@ -2,6 +2,17 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.016] — 2026-08-24
+
+### Added
+- **Regrouping by cantons (12) or electoral circonscriptions (4)** with a
+  checkbox in Simple/Comparer modes: dissolved boundaries (mapshaper), data
+  aggregated as **median or mean over the communes that have data** (communes
+  without data no longer skew the display), year-aware (works with the time
+  slider), detail panel shows the group aggregate
+- The aggregate value is recomputed per selected year (e.g. Sud median house
+  price: 5 594 €/m² in 2025 → 3 112 €/m² in 2010)
+
 ## [2026.08.014] — 2026-08-24
 
 ### Added

@@ -21,6 +21,22 @@ RAW = os.path.normpath(os.path.join(HERE, "..", "raw"))
 PROC = os.path.normpath(os.path.join(HERE, "..", "processed"))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 
+# Electoral circonscriptions (4) from cantons (12) — loi électorale 2002/2016
+CIRCONSCRIPTIONS = {
+    "Luxembourg": "Centre",
+    "Capellen": "Centre",
+    "Mersch": "Centre",
+    "Grevenmacher": "Est",
+    "Echternach": "Est",
+    "Remich": "Est",
+    "Diekirch": "Nord",
+    "Clervaux": "Nord",
+    "Vianden": "Nord",
+    "Wiltz": "Nord",
+    "Redange": "Nord",
+    "Esch-sur-Alzette": "Sud",
+}
+
 
 BLACKLIST = {"moyenne nationale"}  # aggregate rows in the price files
 ALIASES = {"redange sur attert": "redange attert"}
@@ -176,6 +192,9 @@ def main() -> None:
                     "LAU2": f["properties"]["LAU2"],
                     "COMMUNE": f["properties"]["COMMUNE"],
                     "CANTON": f["properties"]["CANTON"],
+                    "CIRCONSCRIPTION": CIRCONSCRIPTIONS.get(
+                        f["properties"]["CANTON"], "?"
+                    ),
                 },
                 "geometry": f["geometry"],
             }

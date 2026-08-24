@@ -5,7 +5,7 @@ Interactive choropleth map of Luxembourg's 102 communes, visualizing open data f
 quality, sunshine, population density, housing prices, cost of living and employment —
 with side-by-side comparisons between indicators.
 
-**Version:** [2026.08.014](https://github.com/LostInTheBugs/LuxMap/releases)
+**Version:** [2026.08.016](https://github.com/LostInTheBugs/LuxMap/releases)
 
 ## ✨ Features
 
@@ -24,6 +24,9 @@ with side-by-side comparisons between indicators.
   Simple and Comparer modes (each map gets its own slider)
 - **Synced years** in Comparer: checkbox to loop through the years common to
   both series with a single play button (both maps advance together)
+- **Canton / circonscription view**: checkbox to regroup by the 12 cantons or
+  the 4 electoral circonscriptions (dissolved boundaries), aggregated as
+  median or mean over the communes that have data — year-aware
 - **Sources page**: ℹ️ button with the link and methodology of every dataset
 - **Dual-map comparison mode**: two synchronized maps side by side, one
   indicator each (stacked on mobile)

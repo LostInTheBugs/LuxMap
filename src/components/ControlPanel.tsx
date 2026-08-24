@@ -1,7 +1,7 @@
-import type { IndicatorKey, ViewMode } from "../types";
+import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.014";
+const APP_VERSION = "2026.08.016";
 
 interface Props {
   mode: ViewMode;
@@ -10,7 +10,6 @@ interface Props {
   onActive: (k: IndicatorKey) => void;
   activeB: IndicatorKey;
   onActiveB: (k: IndicatorKey) => void;
-  communes: number;
   withData: number;
   onExport: () => void;
   exporting: boolean;
@@ -26,6 +25,12 @@ interface Props {
   syncYears: boolean;
   onSyncYears: (v: boolean) => void;
   commonYears: string[];
+  aggMode: AggMode;
+  onAggMode: (m: AggMode) => void;
+  aggStat: AggStat;
+  onAggStat: (s: AggStat) => void;
+  unitLabel: string;
+  unitCount: number;
 }
 
 const MODES: { value: ViewMode; label: string; title: string }[] = [
@@ -46,6 +51,16 @@ const btn = (active: boolean): React.CSSProperties => ({
   cursor: "pointer",
 });
 
+const selStyle: React.CSSProperties = {
+  flex: 1,
+  padding: "6px 8px",
+  borderRadius: 8,
+  border: "1px solid #334155",
+  background: "#1e293b",
+  fontSize: 12.5,
+  color: "#e2e8f0",
+};
+
 export default function ControlPanel({
   mode,
   onMode,
@@ -53,7 +68,6 @@ export default function ControlPanel({
   onActive,
   activeB,
   onActiveB,
-  communes,
   withData,
   onExport,
   exporting,
@@ -69,6 +83,12 @@ export default function ControlPanel({
   syncYears,
   onSyncYears,
   commonYears,
+  aggMode,
+  onAggMode,
+  aggStat,
+  onAggStat,
+  unitLabel,
+  unitCount,
 }: Props) {
   const multi = mode === "dual" || mode === "ratio";
   const synced = mode === "dual" && syncYears && commonYears.length > 0;
@@ -258,6 +278,51 @@ export default function ControlPanel({
         </>
       )}
 
+      {mode !== "ratio" && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginTop: 10,
+            fontSize: 11.5,
+            color: "#cbd5e1",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={aggMode !== "none"}
+            onChange={(e) => onAggMode(e.target.checked ? "canton" : "none")}
+            style={{ accentColor: "#0ea5e9", cursor: "pointer", width: 14, height: 14 }}
+          />
+          🗂 Regrouper par cantons / circonscriptions
+        </label>
+      )}
+
+      {aggMode !== "none" && (
+        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+          <select
+            value={aggMode}
+            onChange={(e) => onAggMode(e.target.value as AggMode)}
+            aria-label="Découpage"
+            style={selStyle}
+          >
+            <option value="canton">Cantons</option>
+            <option value="circonscription">Circonscriptions</option>
+          </select>
+          <select
+            value={aggStat}
+            onChange={(e) => onAggStat(e.target.value as AggStat)}
+            aria-label="Statistique"
+            style={selStyle}
+          >
+            <option value="median">Médiane</option>
+            <option value="mean">Moyenne</option>
+          </select>
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -268,7 +333,7 @@ export default function ControlPanel({
         }}
       >
         <span>
-          {communes} communes · {withData} avec données
+          {unitCount} {unitLabel} · {withData} avec données
         </span>
         <span style={{ color: "#475569" }}>v{APP_VERSION}</span>
       </div>

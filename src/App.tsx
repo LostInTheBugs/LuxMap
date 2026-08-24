@@ -6,7 +6,7 @@ import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
 import InfoModal from "./components/InfoModal";
 import { useMediaQuery } from "./hooks/useMediaQuery";
-import type { CommuneData, IndicatorDef, IndicatorKey, SeriesData, ViewMode } from "./types";
+import { CIRCONSCRIPTIONS, type AggMode, type AggStat, type CommuneData, type IndicatorDef, type IndicatorKey, type SeriesData, type ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
 import indicatorsData from "./data/indicators.json";
 import seriesData from "./data/series.json";
@@ -15,7 +15,12 @@ interface GeoData {
   type: "FeatureCollection";
   features: Array<{
     type: "Feature";
-    properties: { LAU2: string; COMMUNE: string; CANTON: string };
+    properties: {
+      LAU2?: string;
+      COMMUNE?: string;
+      CANTON?: string;
+      CIRCONSCRIPTION?: string;
+    };
     geometry: unknown;
   }>;
 }
@@ -26,9 +31,20 @@ export interface SyncState {
   zoom: number;
 }
 
+/** Median of a sorted numeric array. */
+function median(sorted: number[]): number {
+  const n = sorted.length;
+  return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+}
+
 export default function App() {
   const [data] = useState<CommuneData[]>(indicatorsData as CommuneData[]);
   const [geo, setGeo] = useState<GeoData | null>(null);
+  const geoStamp = useRef(0);
+  const applyGeo = useCallback((g: GeoData) => {
+    geoStamp.current += 1;
+    setGeo(g);
+  }, []);
   const [mode, setMode] = useState<ViewMode>("simple");
   const [active, setActive] = useState<IndicatorKey>("density");
   const [activeB, setActiveB] = useState<IndicatorKey>("prix_maison");
@@ -37,20 +53,28 @@ export default function App() {
   const [exporting, setExporting] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [aggMode, setAggMode] = useState<AggMode>("none");
+  const [aggStat, setAggStat] = useState<AggStat>("median");
   const captureRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/communes.geojson")
+    const url =
+      aggMode === "canton"
+        ? "/cantons.geojson"
+        : aggMode === "circonscription"
+          ? "/circonscriptions.geojson"
+          : "/communes.geojson";
+    fetch(url)
       .then((r) => r.json())
       .then((g) => {
-        if (!cancelled) setGeo(g as GeoData);
+        if (!cancelled) applyGeo(g as GeoData);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [aggMode]);
 
   const byLau2 = useMemo(() => {
     const m = new Map<string, CommuneData>();
@@ -223,13 +247,6 @@ export default function App() {
     setSync(null);
   }, []);
 
-  const withData =
-    mode === "ratio"
-      ? ratioValues.length
-      : currentYearA
-        ? yearlyValuesA.length
-        : valuesOf(active).length;
-
   const exportPng = useCallback(async () => {
     const el = captureRef.current;
     if (!el || exporting) return;
@@ -253,6 +270,48 @@ export default function App() {
   // Re-fit both maps to the country bounds whenever the layout changes
   // (simple/ratio = full width, dual = half width). Without this, map A keeps
   // its full-width zoom when the split happens → the two maps are misaligned.
+
+  // --- canton / circonscription aggregation (mean/median over communes WITH data) ---
+  const groupKeyOf = useCallback(
+    (row: CommuneData): string =>
+      aggMode === "canton" ? row.canton : CIRCONSCRIPTIONS[row.canton] ?? row.canton,
+    [aggMode],
+  );
+  const aggDefs = useCallback(
+    (valueOf: (lau2: string) => number | undefined): Record<string, number> => {
+      const groups = new Map<string, number[]>();
+      for (const row of data) {
+        const v = valueOf(row.lau2);
+        if (v === undefined) continue;
+        const g = groupKeyOf(row);
+        if (!groups.has(g)) groups.set(g, []);
+        groups.get(g)!.push(v);
+      }
+      const out: Record<string, number> = {};
+      for (const [g, vs] of groups) {
+        vs.sort((a, b) => a - b);
+        out[g] = aggStat === "median" ? median(vs) : vs.reduce((a, b) => a + b, 0) / vs.length;
+      }
+      return out;
+    },
+    [data, groupKeyOf, aggStat],
+  );
+
+  const baseValueOfA = currentYearA ? yearlyValueOfA : valueOfA;
+  const baseValueOfB = currentYearB ? yearlyValueOfB : valueOfB;
+  const aggregatesA = useMemo(
+    () => (aggMode !== "none" ? aggDefs(baseValueOfA) : null),
+    [aggMode, aggDefs, baseValueOfA],
+  );
+  const aggregatesB = useMemo(
+    () => (aggMode !== "none" ? aggDefs(baseValueOfB) : null),
+    [aggMode, aggDefs, baseValueOfB],
+  );
+
+  // geometry key/name fields + aggregate-aware valueOf for the maps
+  const keyField = aggMode === "canton" ? "CANTON" : aggMode === "circonscription" ? "CIRCONSCRIPTION" : "LAU2";
+  const nameField = aggMode === "canton" ? "CANTON" : aggMode === "circonscription" ? "CIRCONSCRIPTION" : "COMMUNE";
+
   const refitKey = mode === "dual" ? 2 : 1;
 
   const mapADef =
@@ -261,12 +320,48 @@ export default function App() {
       : currentYearA
         ? { ...def, year: currentYearA }
         : def;
-  const mapAThresholds = mode === "ratio" ? ratioThresholds : currentYearA ? yearlyThresholdsA : thresholds;
-  const mapAValueOf = mode === "ratio" ? ratioValueOf : currentYearA ? yearlyValueOfA : valueOfA;
+  const mapAThresholds = mode === "ratio"
+    ? ratioThresholds
+    : aggMode !== "none" && aggregatesA
+      ? computeThresholds(Object.values(aggregatesA))
+      : currentYearA
+        ? yearlyThresholdsA
+        : thresholds;
+  const mapAValueOf =
+    mode === "ratio"
+      ? ratioValueOf
+      : aggMode !== "none" && aggregatesA
+        ? (key: string) => aggregatesA[key]
+        : currentYearA
+          ? yearlyValueOfA
+          : valueOfA;
   const legendA = mapADef;
   const mapBDef = currentYearB ? { ...defB, year: currentYearB } : defB;
-  const mapBThresholds = currentYearB ? yearlyThresholdsB : thresholdsB;
-  const mapBValueOf = currentYearB ? yearlyValueOfB : valueOfB;
+  const mapBThresholds =
+    aggMode !== "none" && aggregatesB
+      ? computeThresholds(Object.values(aggregatesB))
+      : currentYearB
+        ? yearlyThresholdsB
+        : thresholdsB;
+  const mapBValueOf =
+    aggMode !== "none" && aggregatesB
+      ? (key: string) => aggregatesB[key]
+      : currentYearB
+        ? yearlyValueOfB
+        : valueOfB;
+
+  const withData =
+    mode === "ratio"
+      ? ratioValues.length
+      : aggMode !== "none"
+        ? aggregatesA
+          ? Object.keys(aggregatesA).length
+          : 0
+        : currentYearA
+          ? yearlyValuesA.length
+          : valuesOf(active).length;
+  const unitLabel = aggMode === "canton" ? "cantons" : aggMode === "circonscription" ? "circonscriptions" : "communes";
+  const unitCount = aggMode === "none" ? data.length : new Set(data.map(groupKeyOf)).size;
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
@@ -295,6 +390,9 @@ export default function App() {
               sync={sync}
               onSync={onSync}
               refitKey={refitKey}
+              keyField={keyField}
+              nameField={nameField}
+              geoStamp={geoStamp.current}
             />
           )}
           <ColorLegend side={mode === "dual" ? "A" : undefined} thresholds={mapAThresholds} def={legendA} />
@@ -323,6 +421,9 @@ export default function App() {
                 sync={sync}
                 onSync={onSync}
                 refitKey={refitKey}
+                keyField={keyField}
+                nameField={nameField}
+                geoStamp={geoStamp.current}
               />
             )}
             <ColorLegend side="B" thresholds={mapBThresholds} def={mapBDef} />
@@ -337,7 +438,6 @@ export default function App() {
         onActive={setActive}
         activeB={activeB}
         onActiveB={setActiveB}
-        communes={data.length}
         withData={withData}
         onExport={exportPng}
         exporting={exporting}
@@ -353,6 +453,12 @@ export default function App() {
         syncYears={syncYears}
         onSyncYears={setSyncYears}
         commonYears={commonYears}
+        aggMode={aggMode}
+        onAggMode={setAggMode}
+        aggStat={aggStat}
+        onAggStat={setAggStat}
+        unitLabel={unitLabel}
+        unitCount={unitCount}
       />
 
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
@@ -373,8 +479,50 @@ export default function App() {
         Sources : STATEC (densité 2017 · chômage 2025), AEV (O₃ 2021-23), data.public.lu (prix 2025-26), OpenStreetMap
       </footer>
 
-      {selected && (
-        <div
+      {selected &&
+        (aggMode !== "none" && aggregatesA ? (
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              zIndex: 1001,
+              background: "rgba(15,23,42,0.92)",
+              color: "#f1f5f9",
+              borderRadius: 10,
+              padding: "10px 14px",
+              minWidth: 220,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+            }}
+          >
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
+              {selected}
+              <span style={{ fontWeight: 400, color: "#94a3b8", marginLeft: 6, fontSize: 12 }}>
+                {aggStat === "median" ? "médiane" : "moyenne"} · {aggMode === "canton" ? "canton" : "circonscription"}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 14,
+                fontSize: 13,
+                lineHeight: 1.7,
+              }}
+            >
+              <span style={{ color: "#cbd5e1" }}>{def.label}</span>
+              <b>
+                {aggregatesA[selected] === undefined
+                  ? "—"
+                  : `${aggregatesA[selected].toLocaleString("fr-FR", { maximumFractionDigits: def.decimals ?? 0 })} ${def.unit}`}
+              </b>
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
+              Cliquez ailleurs pour quitter
+            </div>
+          </div>
+        ) : (
+          <div
           style={{
             position: "absolute",
             top: 12,
@@ -436,8 +584,8 @@ export default function App() {
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
             Cliquez sur une autre commune pour comparer
           </div>
-        </div>
-      )}
+          </div>
+        ))}
     </div>
   );
 }
