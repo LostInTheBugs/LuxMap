@@ -243,6 +243,14 @@ export default function App() {
     );
   }, []);
 
+  // Mobile: Simple mode only (Comparer/Ratio/PNG are desktop features)
+  useEffect(() => {
+    if (isMobile && mode !== "simple") {
+      setMode("simple");
+      setSync(null);
+    }
+  }, [isMobile, mode]);
+
   // Changing layout mode: drop stale sync state so the re-fit is deterministic
   // (a leftover sync from a previous zoom would otherwise override the fresh fit).
   const changeMode = useCallback((m: ViewMode) => {
@@ -433,7 +441,7 @@ export default function App() {
               evo={aggMode !== "none" && geoFor === aggMode ? evoA : null}
             />
           )}
-          <ColorLegend side={mode === "dual" ? "A" : undefined} thresholds={mapAThresholds} def={legendA} />
+          <ColorLegend side={mode === "dual" ? "A" : undefined} thresholds={mapAThresholds} def={legendA} bottom={isMobile ? 92 : 34} />
         </div>
         {mode === "dual" && (
           <div
@@ -465,7 +473,7 @@ export default function App() {
                 evo={aggMode !== "none" && geoFor === aggMode ? evoB : null}
               />
             )}
-            <ColorLegend side="B" thresholds={mapBThresholds} def={mapBDef} />
+            <ColorLegend side="B" thresholds={mapBThresholds} def={mapBDef} bottom={isMobile ? 92 : 34} />
           </div>
         )}
       </div>
@@ -498,25 +506,28 @@ export default function App() {
         onAggStat={setAggStat}
         unitLabel={unitLabel}
         unitCount={unitCount}
+        mobile={isMobile}
       />
 
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
 
-      <footer
-        style={{
-          position: "absolute",
-          right: 10,
-          bottom: 8,
-          zIndex: 1000,
-          fontSize: 11,
-          color: "#475569",
-          background: "rgba(255,255,255,0.85)",
-          padding: "3px 8px",
-          borderRadius: 6,
-        }}
-      >
-        Sources : STATEC (densité 2017 · chômage 2025), AEV (O₃ 2021-23), data.public.lu (prix 2025-26), OpenStreetMap
-      </footer>
+      {!isMobile && (
+        <footer
+          style={{
+            position: "absolute",
+            right: 10,
+            bottom: 8,
+            zIndex: 1000,
+            fontSize: 11,
+            color: "#475569",
+            background: "rgba(255,255,255,0.85)",
+            padding: "3px 8px",
+            borderRadius: 6,
+          }}
+        >
+          Sources : STATEC (densité 2017 · chômage 2025), AEV (O₃ 2021-23), data.public.lu (prix 2025-26), OpenStreetMap
+        </footer>
+      )}
 
       {selected &&
         (aggMode !== "none" && aggregatesA ? (

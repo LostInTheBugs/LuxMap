@@ -1,7 +1,8 @@
+import { useState } from "react";
 import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.018-c1";
+const APP_VERSION = "2026.08.020";
 
 interface Props {
   mode: ViewMode;
@@ -31,6 +32,8 @@ interface Props {
   onAggStat: (s: AggStat) => void;
   unitLabel: string;
   unitCount: number;
+  /** Mobile layout: bottom sheet, Simple mode only, no PNG export. */
+  mobile: boolean;
 }
 
 const MODES: { value: ViewMode; label: string; title: string }[] = [
@@ -89,45 +92,137 @@ export default function ControlPanel({
   onAggStat,
   unitLabel,
   unitCount,
+  mobile,
 }: Props) {
+  const [open, setOpen] = useState(false);
   const multi = mode === "dual" || mode === "ratio";
   const synced = mode === "dual" && syncYears && commonYears.length > 0;
+  if (mobile && !open) {
+    return (
+      <div
+        onClick={() => setOpen(true)}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 2000,
+          background: "rgba(15,23,42,0.95)",
+          borderTop: "1px solid #1e293b",
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          boxShadow: "0 -4px 16px rgba(0,0,0,0.35)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#f1f5f9",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flex: 1,
+          }}
+        >
+          🇱🇺{" "}
+          <span style={{ color: "#38bdf8" }}>
+            {INDICATORS.find((d) => d.key === active)?.label ?? ""}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: "#94a3b8", flexShrink: 0, marginLeft: 10 }}>
+          Réglages <span style={{ fontSize: 10 }}>▲</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
-      style={{
-        position: "absolute",
-        top: 12,
-        left: 12,
-        zIndex: 2000,
-        width: 252,
-        background: "rgba(15,23,42,0.92)",
-        border: "1px solid #1e293b",
-        borderRadius: 14,
-        padding: "14px 14px 12px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
-        fontFamily: "system-ui, sans-serif",
-        color: "#e2e8f0",
-      }}
+      style={
+        mobile
+          ? {
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 2000,
+              maxHeight: "64vh",
+              overflowY: "auto",
+              background: "rgba(15,23,42,0.97)",
+              borderTop: "1px solid #1e293b",
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              padding: "14px 16px 16px",
+              boxShadow: "0 -6px 24px rgba(0,0,0,0.4)",
+            }
+          : {
+              position: "absolute",
+              top: 12,
+              left: 12,
+              zIndex: 2000,
+              width: 252,
+              background: "rgba(15,23,42,0.92)",
+              border: "1px solid #1e293b",
+              borderRadius: 14,
+              padding: "14px 14px 12px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+              fontFamily: "system-ui, sans-serif",
+              color: "#e2e8f0",
+            }
+      }
     >
-      <div style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc" }}>
-        🇱🇺 LuxMap
-      </div>
-      <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 10 }}>
-        Données ouvertes du Luxembourg
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc" }}>
+            🇱🇺 LuxMap
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8" }}>Données ouvertes du Luxembourg</div>
+        </div>
+        {mobile && (
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Fermer"
+            style={{
+              border: "none",
+              borderRadius: 8,
+              width: 32,
+              height: 32,
+              fontSize: 15,
+              cursor: "pointer",
+              background: "#1e293b",
+              color: "#cbd5e1",
+            }}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
-      <div style={{ display: "flex", gap: 4 }}>
-        {MODES.map((m) => (
-          <button
-            key={m.value}
-            title={m.title}
-            onClick={() => onMode(m.value)}
-            style={btn(mode === m.value)}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
+      {!mobile && (
+        <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
+          {MODES.map((m) => (
+            <button
+              key={m.value}
+              title={m.title}
+              onClick={() => onMode(m.value)}
+              style={btn(mode === m.value)}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {mode !== "ratio" && ((synced && commonYears.length > 0) || yearsA.length > 0) && (
         <div
@@ -357,11 +452,12 @@ export default function ControlPanel({
         >
           ℹ️ Sources
         </button>
-        <button
-          onClick={onExport}
-          disabled={exporting}
-          aria-label="Exporter en PNG"
-          title="Exporter la carte en PNG"
+        {!mobile && (
+          <button
+            onClick={onExport}
+            disabled={exporting}
+            aria-label="Exporter en PNG"
+            title="Exporter la carte en PNG"
           style={{
             flex: 1,
             padding: "7px 8px",
@@ -375,7 +471,8 @@ export default function ControlPanel({
           }}
         >
           {exporting ? "⏳…" : "📷 PNG"}
-        </button>
+          </button>
+        )}
       </div>
     </div>
   );

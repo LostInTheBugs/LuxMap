@@ -2,6 +2,15 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.020] — 2026-08-24
+
+### Added
+- **Mobile layout** (< 640 px): full-screen map with a collapsible bottom
+  sheet ("Réglages" bar) instead of the side panel. Simple mode only
+  (Comparer/Ratio and the PNG export are desktop features), legend raised
+  above the bar, footer hidden. Year slider, play button, regrouping and
+  sources all work in the sheet
+
 ## [2026.08.018-c1] — 2026-08-24
 
 ### Fixed

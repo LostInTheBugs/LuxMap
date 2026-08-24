@@ -5,9 +5,12 @@ interface Props {
   thresholds: number[];
   def: IndicatorDef;
   side?: "A" | "B";
+  /** Distance from the bottom of the map (desktop 34; raised on mobile so the
+   *  collapsed control bar doesn't cover it). */
+  bottom?: number;
 }
 
-export default function ColorLegend({ thresholds, def, side }: Props) {
+export default function ColorLegend({ thresholds, def, side, bottom = 34 }: Props) {
   if (thresholds.length === 0) return null;
   const n = thresholds.length + 1;
   const colors = PALETTE.slice(0, n);
@@ -20,7 +23,7 @@ export default function ColorLegend({ thresholds, def, side }: Props) {
         position: "absolute",
         left: side === "B" ? undefined : 12,
         right: side === "B" ? 12 : undefined,
-        bottom: 34,
+        bottom: bottom,
         zIndex: 1000,
         background: "rgba(255,255,255,0.92)",
         borderRadius: 10,
