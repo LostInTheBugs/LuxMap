@@ -1,7 +1,7 @@
 import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.006";
+const APP_VERSION = "2026.08.008";
 
 interface Props {
   mode: ViewMode;
@@ -14,13 +14,34 @@ interface Props {
   withData: number;
   onExport: () => void;
   exporting: boolean;
+  onInfo: () => void;
+  hasSeries: boolean;
+  year: string | null;
+  onYear: (y: string) => void;
+  playing: boolean;
+  onPlay: () => void;
+  years: string[];
 }
 
 const MODES: { value: ViewMode; label: string; title: string }[] = [
-  { value: "simple", label: "Simple", title: "Une carte, un indicateur" },
-  { value: "dual", label: "Comparer", title: "Deux cartes côte à côte" },
-  { value: "ratio", label: "Ratio", title: "Rapport A / B sur une carte" },
+  { value: "simple", label: "Simple", title: "Une seule carte" },
+  { value: "dual", label: "Comparer", title: "Deux cartes synchronisées" },
+  { value: "ratio", label: "Ratio", title: "Rapport entre deux indicateurs" },
+  { value: "lecture", label: "Lecture", title: "Évolution dans le temps (indicateurs avec série historique)" },
 ];
+
+const btn = (active: boolean, disabled = false): React.CSSProperties => ({
+  flex: 1,
+  padding: "6px 4px",
+  borderRadius: 7,
+  border: "none",
+  fontSize: 12.5,
+  fontWeight: 700,
+  background: active ? "#0ea5e9" : "#1e293b",
+  color: active ? "#082f49" : "#94a3b8",
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.45 : 1,
+});
 
 export default function ControlPanel({
   mode,
@@ -33,119 +54,142 @@ export default function ControlPanel({
   withData,
   onExport,
   exporting,
+  onInfo,
+  hasSeries,
+  year,
+  onYear,
+  playing,
+  onPlay,
+  years,
 }: Props) {
-  const multi = mode !== "simple";
+  const multi = mode === "dual" || mode === "ratio";
   return (
     <div
       style={{
         position: "absolute",
         top: 12,
         left: 12,
-        zIndex: 1000,
+        zIndex: 2000,
+        width: 238,
         background: "rgba(15,23,42,0.92)",
-        color: "#f1f5f9",
-        borderRadius: 12,
-        padding: "12px 16px",
-        minWidth: 250,
-        maxWidth: "calc(100vw - 24px)",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+        border: "1px solid #1e293b",
+        borderRadius: 14,
+        padding: "14px 14px 12px",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
         fontFamily: "system-ui, sans-serif",
+        color: "#e2e8f0",
       }}
     >
-      <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: 0.5 }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: "#f8fafc" }}>
         🇱🇺 LuxMap
       </div>
-      <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10 }}>
+      <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 10 }}>
         Données ouvertes du Luxembourg
       </div>
 
-      <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
+      <div style={{ display: "flex", gap: 4 }}>
         {MODES.map((m) => (
           <button
             key={m.value}
             title={m.title}
             onClick={() => onMode(m.value)}
-            style={{
-              flex: 1,
-              padding: "6px 4px",
-              borderRadius: 8,
-              border: "1px solid #334155",
-              background: mode === m.value ? "#0ea5e9" : "#1e293b",
-              color: mode === m.value ? "#082f49" : "#cbd5e1",
-              fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
+            disabled={m.value === "lecture" && !hasSeries}
+            style={btn(mode === m.value, m.value === "lecture" && !hasSeries)}
           >
             {m.label}
           </button>
         ))}
       </div>
 
-      <label
-        style={{
-          display: "block",
-          fontSize: 11,
-          textTransform: "uppercase",
-          letterSpacing: 0.8,
-          color: "#64748b",
-          marginBottom: 4,
-        }}
-      >
-        Indicateur {multi ? "A" : ""}
-        {mode === "ratio" ? " (numérateur)" : ""}
-      </label>
+      {mode === "lecture" && years.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 10,
+            background: "#1e293b",
+            borderRadius: 8,
+            padding: "6px 8px",
+          }}
+        >
+          <button
+            onClick={onPlay}
+            aria-label={playing ? "Pause" : "Lecture"}
+            title={playing ? "Pause" : "Lecture automatique"}
+            style={{
+              border: "none",
+              borderRadius: 6,
+              width: 30,
+              height: 26,
+              fontSize: 13,
+              cursor: "pointer",
+              background: playing ? "#f59e0b" : "#0ea5e9",
+              color: "#082f49",
+            }}
+          >
+            {playing ? "⏸" : "▶"}
+          </button>
+          <input
+            type="range"
+            min={years[0]}
+            max={years[years.length - 1]}
+            step={1}
+            value={year ?? years[years.length - 1]}
+            onChange={(e) => onYear(e.target.value)}
+            aria-label="Année"
+            style={{ flex: 1, accentColor: "#0ea5e9" }}
+          />
+          <span style={{ fontSize: 12.5, fontWeight: 800, color: "#f8fafc", minWidth: 30, textAlign: "right" }}>
+            {year}
+          </span>
+        </div>
+      )}
+
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, color: "#64748b", margin: "10px 0 4px" }}>
+        {multi ? "INDICATEUR A" : "INDICATEUR"}
+      </div>
       <select
         value={active}
         onChange={(e) => onActive(e.target.value as IndicatorKey)}
         style={{
           width: "100%",
-          background: "#1e293b",
-          color: "#f1f5f9",
-          border: "1px solid #334155",
+          padding: "6px 8px",
           borderRadius: 8,
-          padding: "7px 8px",
-          fontSize: 13,
+          border: "1px solid #334155",
+          background: "#1e293b",
+          color: "#e2e8f0",
+          fontSize: 12.5,
         }}
       >
-        {INDICATORS.map((d) => (
-          <option key={d.key} value={d.key}>
-            {d.label} ({d.year})
+        {INDICATORS.map((i) => (
+          <option key={i.key} value={i.key}>
+            {i.label} ({i.year})
           </option>
         ))}
       </select>
 
       {multi && (
         <>
-          <label
-            style={{
-              display: "block",
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: 0.8,
-              color: "#64748b",
-              margin: "10px 0 4px",
-            }}
-          >
-            Indicateur B
-            {mode === "ratio" ? " (dénominateur)" : ""}
-          </label>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, color: "#64748b", margin: "8px 0 4px" }}>
+            INDICATEUR B
+          </div>
           <select
             value={activeB}
             onChange={(e) => onActiveB(e.target.value as IndicatorKey)}
             style={{
               width: "100%",
-              background: "#1e293b",
-              color: "#f1f5f9",
-              border: "1px solid #334155",
+              padding: "6px 8px",
               borderRadius: 8,
-              padding: "7px 8px",
-              fontSize: 13,
+              border: "1px solid #334155",
+              background: "#1e293b",
+              color: "#e2e8f0",
+              fontSize: 12.5,
             }}
           >
-            {INDICATORS.map((d) => (
-              <option key={d.key} value={d.key}>
-                {d.label} ({d.year})
+            {INDICATORS.map((i) => (
+              <option key={i.key} value={i.key}>
+                {i.label} ({i.year})
               </option>
             ))}
           </select>
@@ -157,26 +201,45 @@ export default function ControlPanel({
         <span style={{ float: "right", color: "#475569" }}>v{APP_VERSION}</span>
       </div>
 
-      <button
-        onClick={onExport}
-        disabled={exporting}
-        aria-label="Exporter en PNG"
-        title="Exporter la carte en PNG"
-        style={{
-          width: "100%",
-          marginTop: 10,
-          padding: "7px 8px",
-          borderRadius: 8,
-          border: "1px solid #334155",
-          background: exporting ? "#1e293b" : "#0ea5e9",
-          color: exporting ? "#64748b" : "#082f49",
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: exporting ? "wait" : "pointer",
-        }}
-      >
-        {exporting ? "⏳ Export…" : "📷 Exporter en PNG"}
-      </button>
+      <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+        <button
+          onClick={onInfo}
+          aria-label="Sources des données"
+          title="Voir les sources des données"
+          style={{
+            flex: 1,
+            padding: "7px 8px",
+            borderRadius: 8,
+            border: "1px solid #334155",
+            background: "#1e293b",
+            color: "#e2e8f0",
+            fontSize: 12.5,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          ℹ️ Sources
+        </button>
+        <button
+          onClick={onExport}
+          disabled={exporting}
+          aria-label="Exporter en PNG"
+          title="Exporter la carte en PNG"
+          style={{
+            flex: 1,
+            padding: "7px 8px",
+            borderRadius: 8,
+            border: "1px solid #334155",
+            background: exporting ? "#1e293b" : "#0ea5e9",
+            color: exporting ? "#64748b" : "#082f49",
+            fontSize: 12.5,
+            fontWeight: 700,
+            cursor: exporting ? "wait" : "pointer",
+          }}
+        >
+          {exporting ? "⏳…" : "📷 PNG"}
+        </button>
+      </div>
     </div>
   );
 }

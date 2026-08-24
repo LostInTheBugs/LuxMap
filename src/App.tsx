@@ -4,10 +4,12 @@ import html2canvas from "html2canvas";
 import MapPanel from "./components/MapPanel";
 import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
+import InfoModal from "./components/InfoModal";
 import { useMediaQuery } from "./hooks/useMediaQuery";
-import type { CommuneData, IndicatorDef, IndicatorKey, ViewMode } from "./types";
+import type { CommuneData, IndicatorDef, IndicatorKey, SeriesData, ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
 import indicatorsData from "./data/indicators.json";
+import seriesData from "./data/series.json";
 
 interface GeoData {
   type: "FeatureCollection";
@@ -33,6 +35,9 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncState | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [year, setYear] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
@@ -107,6 +112,61 @@ export default function App() {
 
   const ratioThresholds = useMemo(() => computeThresholds(ratioValues), [ratioValues]);
 
+  // --- lecture mode: single map animated across years ---
+  const seriesYears = useMemo(
+    () => (mode === "lecture" ? Object.keys((seriesData as SeriesData)[active] ?? {}).sort() : []),
+    [mode, active],
+  );
+  const currentYear = useMemo(() => {
+    if (mode !== "lecture" || seriesYears.length === 0) return null;
+    return year && seriesYears.includes(year) ? year : seriesYears[seriesYears.length - 1];
+  }, [mode, seriesYears, year]);
+
+  // keep `year` aligned when the indicator or the mode changes
+  useEffect(() => {
+    if (mode !== "lecture" || !currentYear) return;
+    if (year !== currentYear) setYear(currentYear);
+  }, [mode, currentYear, year]);
+
+  const lectureValues = useMemo(() => {
+    if (mode !== "lecture" || !currentYear) return [];
+    const byLau2 = (seriesData as SeriesData)[active]?.[currentYear] ?? {};
+    return Object.values(byLau2).sort((a, b) => a - b);
+  }, [mode, active, currentYear]);
+
+  const lectureThresholds = useMemo(() => computeThresholds(lectureValues), [lectureValues]);
+
+  const lectureValueOf = useCallback(
+    (lau2: string): number | undefined =>
+      mode === "lecture" && currentYear
+        ? (seriesData as SeriesData)[active]?.[currentYear]?.[lau2]
+        : undefined,
+    [mode, active, currentYear],
+  );
+
+  const lectureDef: IndicatorDef | null = useMemo(() => {
+    if (mode !== "lecture" || !currentYear) return null;
+    return { ...defOf(active), year: currentYear };
+  }, [mode, active, currentYear]);
+
+  // auto-advance the year while playing (loops back to the first year)
+  useEffect(() => {
+    if (mode !== "lecture" || !playing || seriesYears.length === 0) return;
+    const id = setInterval(() => {
+      setYear((prev) => {
+        const cur = prev && seriesYears.includes(prev) ? prev : seriesYears[seriesYears.length - 1];
+        const idx = seriesYears.indexOf(cur);
+        return seriesYears[(idx + 1) % seriesYears.length];
+      });
+    }, 500);
+    return () => clearInterval(id);
+  }, [mode, playing, seriesYears]);
+
+  const activeHasSeries = useMemo(
+    () => Object.keys((seriesData as SeriesData)[active] ?? {}).length > 0,
+    [active],
+  );
+
   const ratioValueOf = useCallback(
     (lau2: string): number | undefined => {
       const a = valueOfKey(lau2, active);
@@ -129,10 +189,15 @@ export default function App() {
   const changeMode = useCallback((m: ViewMode) => {
     setMode(m);
     setSync(null);
+    if (m !== "lecture") setPlaying(false);
   }, []);
 
   const withData =
-    mode === "ratio" ? ratioValues.length : valuesOf(active).length;
+    mode === "ratio"
+      ? ratioValues.length
+      : mode === "lecture" && lectureDef
+        ? lectureValues.length
+        : valuesOf(active).length;
 
   const exportPng = useCallback(async () => {
     const el = captureRef.current;
@@ -159,10 +224,10 @@ export default function App() {
   // its full-width zoom when the split happens → the two maps are misaligned.
   const refitKey = mode === "dual" ? 2 : 1;
 
-  const mapADef = mode === "ratio" && ratioDef ? ratioDef : def;
-  const mapAThresholds = mode === "ratio" ? ratioThresholds : thresholds;
-  const mapAValueOf = mode === "ratio" ? ratioValueOf : valueOfA;
-  const legendA = mode === "ratio" && ratioDef ? ratioDef : def;
+  const mapADef = mode === "ratio" && ratioDef ? ratioDef : mode === "lecture" && lectureDef ? lectureDef : def;
+  const mapAThresholds = mode === "ratio" ? ratioThresholds : mode === "lecture" && lectureDef ? lectureThresholds : thresholds;
+  const mapAValueOf = mode === "ratio" ? ratioValueOf : mode === "lecture" && lectureDef ? lectureValueOf : valueOfA;
+  const legendA = mapADef;
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
@@ -236,7 +301,16 @@ export default function App() {
         withData={withData}
         onExport={exportPng}
         exporting={exporting}
+        onInfo={() => setShowInfo(true)}
+        hasSeries={activeHasSeries}
+        year={currentYear}
+        onYear={setYear}
+        playing={playing}
+        onPlay={() => setPlaying((p) => !p)}
+        years={seriesYears}
       />
+
+      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
 
       <footer
         style={{

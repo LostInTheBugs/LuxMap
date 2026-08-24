@@ -22,7 +22,10 @@ export type IndicatorKey =
   | "prix_appart"
   | "prix_maison";
 
-export type ViewMode = "simple" | "dual" | "ratio";
+export type ViewMode = "simple" | "dual" | "ratio" | "lecture";
+
+/** Multi-year series: indicator key → year → lau2 → value. */
+export type SeriesData = Record<string, Record<string, Record<string, number>>>;
 
 export interface IndicatorDef {
   key: IndicatorKey;

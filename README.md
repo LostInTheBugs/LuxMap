@@ -5,7 +5,7 @@ Interactive choropleth map of Luxembourg's 102 communes, visualizing open data f
 quality, sunshine, population density, housing prices, cost of living and employment —
 with side-by-side comparisons between indicators.
 
-**Version:** [2026.08.006](https://github.com/LostInTheBugs/LuxMap/releases)
+**Version:** [2026.08.008](https://github.com/LostInTheBugs/LuxMap/releases)
 
 ## ✨ Features
 
@@ -19,6 +19,9 @@ with side-by-side comparisons between indicators.
   - Announced apartment rents, €/m²/month (2025-26, data.public.lu)
   - Median age (2026, RNPP) and share of foreign residents (2021, RNPP)
 - **PNG export** of the current map (📷 button, 2× resolution)
+- **Lecture mode**: animate multi-year series on the map (play/pause + year
+  slider) — prices 2010-2025, rents 2009-2025, unemployment 2023-2025
+- **Sources page**: ℹ️ button with the link and methodology of every dataset
 - **Dual-map comparison mode**: two synchronized maps side by side, one
   indicator each (stacked on mobile)
 - **Ratio mode**: one map colored by the ratio A / B (any two indicators)

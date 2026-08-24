@@ -2,6 +2,16 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.008] — 2026-08-24
+
+### Added
+- **Lecture mode**: animated time slider (play/pause) for indicators with
+  historical series — announced prices 2010-2025 (apartments & houses),
+  announced rents 2009-2025, unemployment 2023-2025. Quantiles are recomputed
+  per year; the button is disabled for snapshot-only indicators
+- **Sources page** (ℹ️ button): link + methodology note for every dataset
+  (data.public.lu, STATEC LUSTAT, AEV, RNPP, OSM)
+
 ## [2026.08.006] — 2026-08-24
 
 ### Added
