@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import html2canvas from "html2canvas";
 import MapPanel from "./components/MapPanel";
 import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
@@ -263,6 +262,7 @@ export default function App() {
     if (!el || exporting) return;
     setExporting(true);
     try {
+      const { default: html2canvas } = await import("html2canvas");
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
