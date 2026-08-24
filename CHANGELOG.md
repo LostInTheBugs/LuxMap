@@ -2,6 +2,15 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.010] — 2026-08-24
+
+### Changed
+- Lecture mode now starts at the **oldest** year of the series (press play to
+  watch the evolution from the beginning)
+- Year slider + play now available in **Simple and Comparer modes** too (any
+  indicator with a historical series); in Comparer, map B gets its own year
+  slider when its indicator has a series
+
 ## [2026.08.008-c1] — 2026-08-24
 
 ### Fixed

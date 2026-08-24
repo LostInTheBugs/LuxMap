@@ -35,7 +35,6 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncState | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [year, setYear] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
@@ -112,60 +111,70 @@ export default function App() {
 
   const ratioThresholds = useMemo(() => computeThresholds(ratioValues), [ratioValues]);
 
-  // --- lecture mode: single map animated across years ---
-  const seriesYears = useMemo(
-    () => (mode === "lecture" ? Object.keys((seriesData as SeriesData)[active] ?? {}).sort() : []),
-    [mode, active],
+  // --- yearly series: per-year values when a year is selected (any mode) ---
+  const yearsA = useMemo(
+    () => Object.keys((seriesData as SeriesData)[active] ?? {}).sort(),
+    [active],
   );
-  const currentYear = useMemo(() => {
-    if (mode !== "lecture" || seriesYears.length === 0) return null;
-    return year && seriesYears.includes(year) ? year : seriesYears[seriesYears.length - 1];
-  }, [mode, seriesYears, year]);
+  const [yearA, setYearA] = useState<string | null>(null);
+  const currentYearA = useMemo(() => {
+    if (yearsA.length === 0) return null;
+    if (yearA && yearsA.includes(yearA)) return yearA;
+    // lecture mode always starts at the OLDEST year (then just press play)
+    return mode === "lecture" ? yearsA[0] : yearsA[yearsA.length - 1];
+  }, [yearsA, yearA, mode]);
 
-  // keep `year` aligned when the indicator or the mode changes
-  useEffect(() => {
-    if (mode !== "lecture" || !currentYear) return;
-    if (year !== currentYear) setYear(currentYear);
-  }, [mode, currentYear, year]);
+  const yearsB = useMemo(
+    () => Object.keys((seriesData as SeriesData)[activeB] ?? {}).sort(),
+    [activeB],
+  );
+  const [yearB, setYearB] = useState<string | null>(null);
+  const currentYearB = useMemo(() => {
+    if (yearsB.length === 0) return null;
+    if (yearB && yearsB.includes(yearB)) return yearB;
+    return yearsB[yearsB.length - 1];
+  }, [yearsB, yearB]);
 
-  const lectureValues = useMemo(() => {
-    if (mode !== "lecture" || !currentYear) return [];
-    const byLau2 = (seriesData as SeriesData)[active]?.[currentYear] ?? {};
-    return Object.values(byLau2).sort((a, b) => a - b);
-  }, [mode, active, currentYear]);
+  const yearlyValuesA = useMemo(() => {
+    if (!currentYearA) return [];
+    return Object.values((seriesData as SeriesData)[active][currentYearA]).sort((a, b) => a - b);
+  }, [active, currentYearA]);
 
-  const lectureThresholds = useMemo(() => computeThresholds(lectureValues), [lectureValues]);
+  const yearlyThresholdsA = useMemo(() => computeThresholds(yearlyValuesA), [yearlyValuesA]);
 
-  const lectureValueOf = useCallback(
+  const yearlyValueOfA = useCallback(
     (lau2: string): number | undefined =>
-      mode === "lecture" && currentYear
-        ? (seriesData as SeriesData)[active]?.[currentYear]?.[lau2]
-        : undefined,
-    [mode, active, currentYear],
+      currentYearA ? (seriesData as SeriesData)[active]?.[currentYearA]?.[lau2] : undefined,
+    [active, currentYearA],
   );
 
-  const lectureDef: IndicatorDef | null = useMemo(() => {
-    if (mode !== "lecture" || !currentYear) return null;
-    return { ...defOf(active), year: currentYear };
-  }, [mode, active, currentYear]);
+  const yearlyValuesB = useMemo(() => {
+    if (!currentYearB) return [];
+    return Object.values((seriesData as SeriesData)[activeB][currentYearB]).sort((a, b) => a - b);
+  }, [activeB, currentYearB]);
+
+  const yearlyThresholdsB = useMemo(() => computeThresholds(yearlyValuesB), [yearlyValuesB]);
+
+  const yearlyValueOfB = useCallback(
+    (lau2: string): number | undefined =>
+      currentYearB ? (seriesData as SeriesData)[activeB]?.[currentYearB]?.[lau2] : undefined,
+    [activeB, currentYearB],
+  );
 
   // auto-advance the year while playing (loops back to the first year)
   useEffect(() => {
-    if (mode !== "lecture" || !playing || seriesYears.length === 0) return;
+    if (!playing || yearsA.length === 0) return;
     const id = setInterval(() => {
-      setYear((prev) => {
-        const cur = prev && seriesYears.includes(prev) ? prev : seriesYears[seriesYears.length - 1];
-        const idx = seriesYears.indexOf(cur);
-        return seriesYears[(idx + 1) % seriesYears.length];
+      setYearA((prev) => {
+        const cur = prev && yearsA.includes(prev) ? prev : yearsA[yearsA.length - 1];
+        const idx = yearsA.indexOf(cur);
+        return yearsA[(idx + 1) % yearsA.length];
       });
     }, 500);
     return () => clearInterval(id);
-  }, [mode, playing, seriesYears]);
+  }, [playing, yearsA]);
 
-  const activeHasSeries = useMemo(
-    () => Object.keys((seriesData as SeriesData)[active] ?? {}).length > 0,
-    [active],
-  );
+  const activeHasSeries = yearsA.length > 0;
 
   const ratioValueOf = useCallback(
     (lau2: string): number | undefined => {
@@ -189,14 +198,14 @@ export default function App() {
   const changeMode = useCallback((m: ViewMode) => {
     setMode(m);
     setSync(null);
-    if (m !== "lecture") setPlaying(false);
+    if (m === "lecture") setYearA(null); // lecture always starts at the oldest year
   }, []);
 
   const withData =
     mode === "ratio"
       ? ratioValues.length
-      : mode === "lecture" && lectureDef
-        ? lectureValues.length
+      : currentYearA
+        ? yearlyValuesA.length
         : valuesOf(active).length;
 
   const exportPng = useCallback(async () => {
@@ -224,10 +233,18 @@ export default function App() {
   // its full-width zoom when the split happens → the two maps are misaligned.
   const refitKey = mode === "dual" ? 2 : 1;
 
-  const mapADef = mode === "ratio" && ratioDef ? ratioDef : mode === "lecture" && lectureDef ? lectureDef : def;
-  const mapAThresholds = mode === "ratio" ? ratioThresholds : mode === "lecture" && lectureDef ? lectureThresholds : thresholds;
-  const mapAValueOf = mode === "ratio" ? ratioValueOf : mode === "lecture" && lectureDef ? lectureValueOf : valueOfA;
+  const mapADef =
+    mode === "ratio" && ratioDef
+      ? ratioDef
+      : currentYearA
+        ? { ...def, year: currentYearA }
+        : def;
+  const mapAThresholds = mode === "ratio" ? ratioThresholds : currentYearA ? yearlyThresholdsA : thresholds;
+  const mapAValueOf = mode === "ratio" ? ratioValueOf : currentYearA ? yearlyValueOfA : valueOfA;
   const legendA = mapADef;
+  const mapBDef = currentYearB ? { ...defB, year: currentYearB } : defB;
+  const mapBThresholds = currentYearB ? yearlyThresholdsB : thresholdsB;
+  const mapBValueOf = currentYearB ? yearlyValueOfB : valueOfB;
 
   return (
     <div style={{ position: "fixed", inset: 0 }}>
@@ -275,9 +292,10 @@ export default function App() {
                 geo={geo}
                 side="B"
                 active={activeB}
-                thresholds={thresholdsB}
+                def={mapBDef}
+                thresholds={mapBThresholds}
                 selected={selected}
-                valueOf={valueOfB}
+                valueOf={mapBValueOf}
                 onSelect={setSelected}
                 syncEnabled={mode === "dual"}
                 sync={sync}
@@ -285,7 +303,7 @@ export default function App() {
                 refitKey={refitKey}
               />
             )}
-            <ColorLegend side="B" thresholds={thresholdsB} def={defB} />
+            <ColorLegend side="B" thresholds={mapBThresholds} def={mapBDef} />
           </div>
         )}
       </div>
@@ -303,11 +321,14 @@ export default function App() {
         exporting={exporting}
         onInfo={() => setShowInfo(true)}
         hasSeries={activeHasSeries}
-        year={currentYear}
-        onYear={setYear}
+        yearsA={yearsA}
+        yearA={currentYearA}
+        onYearA={setYearA}
+        yearsB={yearsB}
+        yearB={currentYearB}
+        onYearB={setYearB}
         playing={playing}
         onPlay={() => setPlaying((p) => !p)}
-        years={seriesYears}
       />
 
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}

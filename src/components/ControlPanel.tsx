@@ -1,7 +1,7 @@
 import type { IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.008";
+const APP_VERSION = "2026.08.010";
 
 interface Props {
   mode: ViewMode;
@@ -16,11 +16,14 @@ interface Props {
   exporting: boolean;
   onInfo: () => void;
   hasSeries: boolean;
-  year: string | null;
-  onYear: (y: string) => void;
+  yearsA: string[];
+  yearA: string | null;
+  onYearA: (y: string) => void;
+  yearsB: string[];
+  yearB: string | null;
+  onYearB: (y: string) => void;
   playing: boolean;
   onPlay: () => void;
-  years: string[];
 }
 
 const MODES: { value: ViewMode; label: string; title: string }[] = [
@@ -56,11 +59,14 @@ export default function ControlPanel({
   exporting,
   onInfo,
   hasSeries,
-  year,
-  onYear,
+  yearsA,
+  yearA,
+  onYearA,
+  yearsB,
+  yearB,
+  onYearB,
   playing,
   onPlay,
-  years,
 }: Props) {
   const multi = mode === "dual" || mode === "ratio";
   return (
@@ -101,7 +107,7 @@ export default function ControlPanel({
         ))}
       </div>
 
-      {mode === "lecture" && years.length > 0 && (
+      {mode !== "ratio" && yearsA.length > 0 && (
         <div
           style={{
             display: "flex",
@@ -132,16 +138,45 @@ export default function ControlPanel({
           </button>
           <input
             type="range"
-            min={years[0]}
-            max={years[years.length - 1]}
+            min={yearsA[0]}
+            max={yearsA[yearsA.length - 1]}
             step={1}
-            value={year ?? years[years.length - 1]}
-            onChange={(e) => onYear(e.target.value)}
+            value={yearA ?? yearsA[yearsA.length - 1]}
+            onChange={(e) => onYearA(e.target.value)}
             aria-label="Année"
             style={{ flex: 1, accentColor: "#0ea5e9" }}
           />
           <span style={{ fontSize: 12.5, fontWeight: 800, color: "#f8fafc", minWidth: 30, textAlign: "right" }}>
-            {year}
+            {yearA}
+          </span>
+        </div>
+      )}
+
+      {mode === "dual" && yearsB.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 6,
+            background: "#1e293b",
+            borderRadius: 8,
+            padding: "4px 8px",
+          }}
+        >
+          <span style={{ fontSize: 10, fontWeight: 800, color: "#64748b" }}>B</span>
+          <input
+            type="range"
+            min={yearsB[0]}
+            max={yearsB[yearsB.length - 1]}
+            step={1}
+            value={yearB ?? yearsB[yearsB.length - 1]}
+            onChange={(e) => onYearB(e.target.value)}
+            aria-label="Année B"
+            style={{ flex: 1, accentColor: "#0ea5e9" }}
+          />
+          <span style={{ fontSize: 12, fontWeight: 800, color: "#f8fafc", minWidth: 30, textAlign: "right" }}>
+            {yearB}
           </span>
         </div>
       )}
