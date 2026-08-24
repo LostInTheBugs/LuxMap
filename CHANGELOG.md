@@ -2,6 +2,18 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.022] — 2026-08-24
+
+### Added
+- **Population** indicator (STATEC LUSTAT DF_X021): per-commune series from
+  1821 to 2026 (60 years) with the year slider and evolution labels
+- **Road accidents** indicator (STATEC LUSTAT DF_X040): per-canton series
+  2015–2025 (all severities), canton values reported on their communes
+- New ETL parser `data/scripts/parse_lustat2.py` (SDMX-JSON 2.0 / `jsondata`
+  format, DSD-prefixed flows) feeding `build_data.py` + `parse_series.py`
+- Sources page entries + README/data-sources inventory for both indicators
+- Version badge now tracks the release (APP_VERSION bumped with the release)
+
 ## [2026.08.021] — 2026-08-24
 
 ### Performance

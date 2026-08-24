@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 
-const APP_VERSION = "2026.08.021";
+const APP_VERSION = "2026.08.022";
 
 interface Props {
   mode: ViewMode;
