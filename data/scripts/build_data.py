@@ -178,9 +178,18 @@ def main() -> None:
                 clean[key] = row[key]
         out.append(clean)
 
-    os.makedirs(os.path.join(ROOT, "src", "data"), exist_ok=True)
-    with open(os.path.join(ROOT, "src", "data", "indicators.json"), "w", encoding="utf-8") as f:
+    os.makedirs(os.path.join(ROOT, "public"), exist_ok=True)
+    with open(os.path.join(ROOT, "public", "indicators.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False)
+
+    # series.json est produit par parse_series.py dans data/processed/ ; le
+    # copier vers public/ pour qu'il soit servi statiquement (pas d'inline bundle)
+    import shutil
+
+    shutil.copy(
+        os.path.join(ROOT, "data", "processed", "series.json"),
+        os.path.join(ROOT, "public", "series.json"),
+    )
 
     os.makedirs(os.path.join(ROOT, "public"), exist_ok=True)
     simple = {

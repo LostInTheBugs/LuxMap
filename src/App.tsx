@@ -7,8 +7,6 @@ import InfoModal from "./components/InfoModal";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { CIRCONSCRIPTIONS, type AggMode, type AggStat, type CommuneData, type IndicatorDef, type IndicatorKey, type SeriesData, type ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
-import indicatorsData from "./data/indicators.json";
-import seriesData from "./data/series.json";
 
 interface GeoData {
   type: "FeatureCollection";
@@ -37,7 +35,23 @@ function median(sorted: number[]): number {
 }
 
 export default function App() {
-  const [data] = useState<CommuneData[]>(indicatorsData as CommuneData[]);
+  const [data, setData] = useState<CommuneData[]>([]);
+  const [seriesData, setSeriesData] = useState<SeriesData>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetch("/indicators.json").then((r) => r.json()),
+      fetch("/series.json").then((r) => r.json()),
+    ]).then(([indicators, series]) => {
+      if (cancelled) return;
+      setData(indicators as CommuneData[]);
+      setSeriesData(series as SeriesData);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [geo, setGeo] = useState<GeoData | null>(null);
   const geoStamp = useRef(0);
   const [geoFor, setGeoFor] = useState<AggMode>("none");
@@ -139,8 +153,8 @@ export default function App() {
 
   // --- yearly series: per-year values when a year is selected (any mode) ---
   const yearsA = useMemo(
-    () => Object.keys((seriesData as SeriesData)[active] ?? {}).sort(),
-    [active],
+    () => Object.keys(seriesData[active] ?? {}).sort(),
+    [active, seriesData],
   );
   const [yearA, setYearA] = useState<string | null>(null);
   const currentYearA = useMemo(() => {
@@ -150,8 +164,8 @@ export default function App() {
   }, [yearsA, yearA]);
 
   const yearsB = useMemo(
-    () => Object.keys((seriesData as SeriesData)[activeB] ?? {}).sort(),
-    [activeB],
+    () => Object.keys(seriesData[activeB] ?? {}).sort(),
+    [activeB, seriesData],
   );
   const [yearB, setYearB] = useState<string | null>(null);
   const [syncYears, setSyncYears] = useState(false);
@@ -185,28 +199,28 @@ export default function App() {
 
   const yearlyValuesA = useMemo(() => {
     if (!currentYearA) return [];
-    return Object.values((seriesData as SeriesData)[active][currentYearA]).sort((a, b) => a - b);
-  }, [active, currentYearA]);
+    return Object.values(seriesData[active][currentYearA]).sort((a, b) => a - b);
+  }, [active, currentYearA, seriesData]);
 
   const yearlyThresholdsA = useMemo(() => computeThresholds(yearlyValuesA), [yearlyValuesA]);
 
   const yearlyValueOfA = useCallback(
     (lau2: string): number | undefined =>
-      currentYearA ? (seriesData as SeriesData)[active]?.[currentYearA]?.[lau2] : undefined,
-    [active, currentYearA],
+      currentYearA ? seriesData[active]?.[currentYearA]?.[lau2] : undefined,
+    [active, currentYearA, seriesData],
   );
 
   const yearlyValuesB = useMemo(() => {
     if (!currentYearB) return [];
-    return Object.values((seriesData as SeriesData)[activeB][currentYearB]).sort((a, b) => a - b);
-  }, [activeB, currentYearB]);
+    return Object.values(seriesData[activeB][currentYearB]).sort((a, b) => a - b);
+  }, [activeB, currentYearB, seriesData]);
 
   const yearlyThresholdsB = useMemo(() => computeThresholds(yearlyValuesB), [yearlyValuesB]);
 
   const yearlyValueOfB = useCallback(
     (lau2: string): number | undefined =>
-      currentYearB ? (seriesData as SeriesData)[activeB]?.[currentYearB]?.[lau2] : undefined,
-    [activeB, currentYearB],
+      currentYearB ? seriesData[activeB]?.[currentYearB]?.[lau2] : undefined,
+    [activeB, currentYearB, seriesData],
   );
 
   // auto-advance the year while playing (loops back to the first year)
@@ -326,8 +340,8 @@ export default function App() {
     const idx = yearsA.indexOf(curYear);
     if (idx <= 0) return null; // first year of the series: nothing to compare
     const prevYear = yearsA[idx - 1];
-    const cur = aggDefs((lau2) => (seriesData as SeriesData)[active]?.[curYear]?.[lau2]);
-    const prev = aggDefs((lau2) => (seriesData as SeriesData)[active]?.[prevYear]?.[lau2]);
+    const cur = aggDefs((lau2) => seriesData[active]?.[curYear]?.[lau2]);
+    const prev = aggDefs((lau2) => seriesData[active]?.[prevYear]?.[lau2]);
     const map: Record<string, number> = {};
     for (const [g, v] of Object.entries(cur)) {
       const p = prev[g];
@@ -335,15 +349,15 @@ export default function App() {
       map[g] = ((v - p) / p) * 100;
     }
     return { map, prevYear };
-  }, [aggMode, yearsA, currentYearA, aggDefs, active]);
+  }, [aggMode, yearsA, currentYearA, aggDefs, active, seriesData]);
   const evoB = useMemo<{ map: Record<string, number>; prevYear: string } | null>(() => {
     if (aggMode === "none" || yearsB.length < 2) return null;
     const curYear = currentYearB ?? yearsB[yearsB.length - 1];
     const idx = yearsB.indexOf(curYear);
     if (idx <= 0) return null;
     const prevYear = yearsB[idx - 1];
-    const cur = aggDefs((lau2) => (seriesData as SeriesData)[activeB]?.[curYear]?.[lau2]);
-    const prev = aggDefs((lau2) => (seriesData as SeriesData)[activeB]?.[prevYear]?.[lau2]);
+    const cur = aggDefs((lau2) => seriesData[activeB]?.[curYear]?.[lau2]);
+    const prev = aggDefs((lau2) => seriesData[activeB]?.[prevYear]?.[lau2]);
     const map: Record<string, number> = {};
     for (const [g, v] of Object.entries(cur)) {
       const p = prev[g];
@@ -351,7 +365,7 @@ export default function App() {
       map[g] = ((v - p) / p) * 100;
     }
     return { map, prevYear };
-  }, [aggMode, yearsB, currentYearB, aggDefs, activeB]);
+  }, [aggMode, yearsB, currentYearB, aggDefs, activeB, seriesData]);
 
   // geometry key/name fields + aggregate-aware valueOf for the maps
   const keyField = aggMode === "canton" ? "CANTON" : aggMode === "circonscription" ? "CIRCONSCRIPTION" : "LAU2";

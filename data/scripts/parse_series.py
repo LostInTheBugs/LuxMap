@@ -145,12 +145,6 @@ def main() -> None:
     with open(os.path.join(OUT, "series.json"), "w", encoding="utf-8") as f:
         json.dump(series, f, ensure_ascii=False)
 
-    # also emit into src/data for the app bundle (imported as a module)
-    root = os.path.normpath(os.path.join(HERE, "..", ".."))
-    os.makedirs(os.path.join(root, "src", "data"), exist_ok=True)
-    with open(os.path.join(root, "src", "data", "series.json"), "w", encoding="utf-8") as f:
-        json.dump(series, f, ensure_ascii=False)
-
     for key, by_year in series.items():
         years = sorted(by_year)
         cov = [f"{y}:{len(by_year[y])}" for y in years]
