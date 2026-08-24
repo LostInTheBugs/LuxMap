@@ -2,6 +2,14 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.004-c2] — 2026-08-23
+
+### Fixed
+- Dual-mode maps misaligned at start on wide screens: map A kept its
+  full-width fit when the split happened. Both maps now re-fit to the country
+  bounds on every mode change (RefitController), and stale sync state is
+  dropped when switching modes
+
 ## [2026.08.004-c1] — 2026-08-23
 
 ### Fixed
