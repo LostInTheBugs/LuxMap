@@ -2,6 +2,15 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.023-pre] — 2026-08-24
+
+### Added
+- **Natural balance** indicator (STATEC LUSTAT DF_X024, variable A03): births
+  minus deaths per commune, series 1987–2025 with the year slider
+- **Net migration** indicator (STATEC LUSTAT DF_X025, variable M003): arrivals
+  minus departures per commune, series 1990–2025 with the year slider
+- Release workflow now supports `-pre` tags (prerelease GitHub releases)
+
 ## [2026.08.022] — 2026-08-24
 
 ### Added

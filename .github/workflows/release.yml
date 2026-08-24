@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - "20[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]"
+      - "20[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]-pre"
       - "20[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9]-c*"
 permissions:
   contents: write
@@ -26,3 +27,4 @@ jobs:
           name: ${{ github.ref_name }}
           body_path: /tmp/notes.md
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-pre') }}

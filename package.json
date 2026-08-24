@@ -1,7 +1,7 @@
 {
   "name": "luxmap",
   "private": true,
-  "version": "2026.08.022",
+  "version": "2026.08.023-pre",
   "type": "module",
   "scripts": {
     "dev": "vite",
