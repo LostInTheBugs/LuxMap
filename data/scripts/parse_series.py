@@ -131,15 +131,31 @@ def join_by_name(series: dict[str, dict[str, float]], lau2_by_norm: dict[str, st
     return out
 
 
+def transpose_lau2_series(data: dict[str, dict[str, float]]) -> dict[str, dict[str, float]]:
+    """{lau2: {year: value}} → {year: {lau2: value}} (outputs of parse_lustat2.py)."""
+    out: dict[str, dict[str, float]] = {}
+    for lau2, by_year in data.items():
+        for year, v in by_year.items():
+            out.setdefault(year, {})[lau2] = v
+    return out
+
+
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
     lau2 = load_communes()
+
+    with open(os.path.join(OUT, "population.json"), encoding="utf-8") as f:
+        population = transpose_lau2_series(json.load(f))
+    with open(os.path.join(OUT, "accidents.json"), encoding="utf-8") as f:
+        accidents = transpose_lau2_series(json.load(f))
 
     series: dict[str, dict[str, dict[str, float]]] = {
         "prix_appart": join_by_name(parse_xlsx_series(os.path.join(RAW, "vente-appartement-2010-2025.xlsx")), lau2),
         "prix_maison": join_by_name(parse_xlsx_series(os.path.join(RAW, "vente-maison-2010-2025.xlsx")), lau2),
         "loyer_appart": join_by_name(parse_xls_series(os.path.join(RAW, "loyers-annonces-apparts-2009-2025.xls")), lau2),
         "chomage": join_by_name(parse_chomage_series(), lau2),
+        "population": population,
+        "accidents": accidents,
     }
 
     with open(os.path.join(OUT, "series.json"), "w", encoding="utf-8") as f:

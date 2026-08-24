@@ -35,6 +35,22 @@ const SOURCES: SourceEntry[] = [
     url: "https://lustat.statec.lu/rest/data/LU1,DF_X026,1.1/all?startPeriod=2023&endPeriod=2025",
   },
   {
+    key: "population",
+    label: "Population",
+    org: "STATEC LUSTAT (DF_X021)",
+    period: "1821–2026",
+    note: "Population par canton et commune au 1er janvier. Recensements espacés jusqu'en 1978, puis annuel. Série temporelle en mode Lecture.",
+    url: "https://lustat.statec.lu/rest/data/LU1,DF_X021,1.1/all?format=jsondata",
+  },
+  {
+    key: "accidents",
+    label: "Accidents de la route (par canton)",
+    org: "STATEC LUSTAT (DF_X040)",
+    period: "2015–2025",
+    note: "Accidents corporels de circulation routière, tous gravités, par canton. La valeur du canton est reportée sur ses communes. Série temporelle en mode Lecture.",
+    url: "https://lustat.statec.lu/rest/data/LU1,DSD_ACCIDENT@DF_X040,1.0/all?format=jsondata",
+  },
+  {
     key: "o3_days",
     label: "Jours O₃ > 120 µg/m³",
     org: "data.public.lu — AEV",

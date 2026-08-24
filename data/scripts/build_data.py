@@ -120,6 +120,12 @@ def load_etrangers() -> dict[str, float]:
         return json.load(f)
 
 
+def load_lustat2(name: str) -> dict[str, dict[str, float]]:
+    """{lau2: {year: value}} from parse_lustat2.py (population, accidents)."""
+    with open(os.path.join(PROC, f"{name}.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
 def main() -> None:
     with open(os.path.join(RAW, "limadmin.geojson"), encoding="utf-8") as f:
         gj = json.load(f)
@@ -138,6 +144,10 @@ def main() -> None:
     loyers = load_loyers()
     loyer_by_norm = {norm(n): v for n, v in loyers.get("appart", {}).items() if norm(n) not in BLACKLIST}
     age_median = load_age_median()
+    population = load_lustat2("population")
+    accidents = load_lustat2("accidents")
+    pop_latest = {lau2: max(by_year, key=lambda y: (by_year[y] is not None, y)) for lau2, by_year in population.items()}
+    acc_latest = {lau2: max(by_year, key=lambda y: (by_year[y] is not None, y)) for lau2, by_year in accidents.items()}
     etrangers_by_norm = load_etrangers()
 
     indicators = []
@@ -158,6 +168,10 @@ def main() -> None:
         etr = etrangers_by_norm.get(norm(name))
         if etr is not None:
             row["etrangers"] = round(etr, 1)
+        if lau2 in pop_latest:
+            row["population"] = pop_latest[lau2]
+        if lau2 in acc_latest:
+            row["accidents"] = acc_latest[lau2]
         loyer = loyer_by_norm.get(norm(name))
         if loyer is not None:
             row["loyer_appart"] = round(loyer, 2)
@@ -173,7 +187,7 @@ def main() -> None:
     out = []
     for row in sorted(indicators, key=lambda r: r["commune"]):
         clean = {"lau2": row["lau2"], "commune": row["commune"], "canton": row["canton"]}
-        for key in ("density", "chomage", "o3_days", "age_median", "etrangers", "loyer_appart", "prix_appart", "prix_maison"):
+        for key in ("density", "chomage", "o3_days", "age_median", "etrangers", "loyer_appart", "prix_appart", "prix_maison", "population", "accidents"):
             if key in row:
                 clean[key] = row[key]
         out.append(clean)
@@ -222,6 +236,8 @@ def main() -> None:
     print(f"  loyer_appart: {sum('loyer_appart' in r for r in out)}")
     print(f"  prix_appart: {sum('prix_appart' in r for r in out)}")
     print(f"  prix_maison: {sum('prix_maison' in r for r in out)}")
+    print(f"  population: {sum('population' in r for r in out)}")
+    print(f"  accidents: {sum('accidents' in r for r in out)}")
     for k, names in unmatched.items():
         print(f"  sans prix ({k}): {len(names)} — {sorted(names)[:12]}")
 

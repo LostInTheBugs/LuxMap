@@ -10,6 +10,8 @@ export interface CommuneData {
   loyer_appart?: number;
   prix_appart?: number;
   prix_maison?: number;
+  population?: number;
+  accidents?: number;
 }
 
 export type IndicatorKey =
@@ -20,7 +22,9 @@ export type IndicatorKey =
   | "etrangers"
   | "loyer_appart"
   | "prix_appart"
-  | "prix_maison";
+  | "prix_maison"
+  | "population"
+  | "accidents";
 
 export type ViewMode = "simple" | "dual" | "ratio";
 

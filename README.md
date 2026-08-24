@@ -50,7 +50,9 @@ See [docs/data-sources.md](docs/data-sources.md) for the full inventory.
 |-------|--------|--------|
 | Housing prices (per commune) | data.public.lu — "Prix annoncés des logements - Par commune" | ✅ integrated |
 | Population density (per commune) | data.public.lu → STATEC LUSTAT (DF_X020, SDMX-JSON) | ✅ integrated |
+| Population (per commune, 1821–2026) | STATEC LUSTAT (DF_X021, SDMX-JSON) | ✅ integrated |
 | Unemployment rate (per commune) | STATEC LUSTAT (DF_X026, SDMX-JSON) | ✅ integrated |
+| Road accidents (per canton, 2015–2025) | STATEC LUSTAT (DF_X040, SDMX-JSON) | ✅ integrated |
 | Air quality (O₃ exceedance days) | data.public.lu — "Ozone - O₃ > 120 µg/m³" (AEV, 53 stations, IDW) | ✅ integrated |
 | Commune boundaries (GeoJSON) | data.public.lu — "Limites administratives" (limadmin.geojson) | ✅ integrated |
 | Sunshine hours | MeteoLux HVD API — ❌ 1 station only (Findel), realtime airport data, no sunshine parameter | ⛔ not feasible per commune |

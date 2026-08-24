@@ -10,7 +10,9 @@ Verified against the data.public.lu udata API
 | Boundaries | **Limites administratives du Grand-Duché de Luxembourg** | ✅ used (limadmin.geojson, 100 communes, LAU2 codes) |
 | Housing | **Prix annoncés des logements - Par commune** (also: all-Luxembourg, Luxembourg-Ville per quartier) | ✅ used (XLS 2025-26) |
 | Population density | **Densité de la population par canton et commune (Habitants par km²) 1821 - 2017** | ✅ used (STATEC LUSTAT DF_X020) |
+| Population | **Population par canton et commune au 1er janvier** (STATEC LUSTAT **DF_X021**) | ✅ used (60 millésimes 1821–2026, recensements puis annuel) |
 | Unemployment | **Population et emploi - Marché du travail - Chômage** → STATEC LUSTAT **DF_X026** (Emploi et chômage par canton et commune) | ✅ used (VARIABLE C6 = taux de chômage %) |
+| Road accidents | **Accidents corporels de circulation routière** → STATEC LUSTAT **DF_X040** (par canton et gravité) | ✅ used (SEVERITY_ACC=_T, 2015–2025, canton → communes) |
 | Air quality | **Ozone - O₃: days with maximum 8h mean values above 120 µg/m³** (AEV, 53 station points, Greater Region) | ✅ used (IDW interpolation → communes) |
 | Air quality | **Environnement et urbanisme - Données brutes mesures qualité de l'air et trafic** (VDL, 2 stations city-only) | ⛔ too local |
 | Weather | **Meteolux API** — HVD: 1 station only (Findel), realtime airport METAR params, **no sunshine/solar parameter** | ⛔ not feasible per commune |
@@ -39,4 +41,8 @@ Verified against the data.public.lu udata API
 - STATEC LUSTAT SDMX-REST: `https://lustat.statec.lu/rest/data/LU1,<FLOW>,<version>/all?format=JSON`
   (version required, e.g. DF_X020 = 1.1, DF_X026 = 1.1; `Accept: application/json`
   returns SDMX-JSON; some observations use `""` for missing values).
+- Flows with a DSD prefix (e.g. `DSD_ACCIDENT@DF_X040`) must be URL-encoded
+  (`%40`) in the REST path and answered with **`format=jsondata`** (SDMX-JSON 2.0:
+  `data.dataSets[0].series` + `data.structures[0]` — parsed by
+  `data/scripts/parse_lustat2.py`).
 - MeteoLux open-data API: HVD endpoints under `https://metapi.ana.lu/api/v1/hvd/…` (CC0).

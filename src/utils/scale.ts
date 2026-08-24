@@ -21,12 +21,28 @@ export const INDICATORS: IndicatorDef[] = [
     decimals: 0,
   },
   {
+    key: "population",
+    label: "Population",
+    unit: "hab.",
+    year: "2026",
+    source: "STATEC",
+    decimals: 0,
+  },
+  {
     key: "chomage",
     label: "Taux de chômage",
     unit: "%",
     year: "2025",
     source: "STATEC",
     decimals: 1,
+  },
+  {
+    key: "accidents",
+    label: "Accidents de la route (par canton)",
+    unit: "accidents",
+    year: "2025",
+    source: "STATEC",
+    decimals: 0,
   },
   {
     key: "o3_days",
