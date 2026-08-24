@@ -91,6 +91,9 @@ docker run -d -p ${PORT:-3003}:80 luxmap
 └── Dockerfile
 ```
 
+> Re-run `python3 data/scripts/shrink_geojson.py` after any regeneration of the
+> GeoJSON files in `public/` (rounds coordinates to 5 decimals and minifies).
+
 ## License
 
 [MIT](LICENSE)
