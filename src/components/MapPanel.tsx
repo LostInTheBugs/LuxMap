@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { GeoJSON, MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
+import { GeoJSON, MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import type { IndicatorDef, IndicatorKey } from "../types";
 import { colorFor, defOf, fmt } from "../utils/scale";
 import type { SyncState } from "../App";
@@ -14,6 +14,7 @@ interface GeoFeature {
     COMMUNE?: string;
     CANTON?: string;
     CIRCONSCRIPTION?: string;
+    [k: string]: string | undefined;
   };
   geometry: unknown;
 }
@@ -41,6 +42,52 @@ interface Props {
   nameField: string;
   /** Increments whenever the geometry data changes (forces a GeoJSON remount). */
   geoStamp: number;
+  /** Year-over-year % evolution per group (markers + tooltip). */
+  evo: { map: Record<string, number>; prevYear: string } | null;
+}
+
+/** Centroid (lng, lat) of the largest ring of a Polygon/MultiPolygon. */
+function polygonCentroid(
+  geometry: { type: string; coordinates: unknown },
+): [number, number] | null {
+  const rings: number[][][] =
+    geometry.type === "Polygon"
+      ? (geometry.coordinates as number[][][])
+      : (geometry.coordinates as number[][][][]).flat();
+  let best: [number, number] | null = null;
+  let bestArea = -1;
+  for (const ring of rings) {
+    let s = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      s += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+    }
+    const area = Math.abs(s) / 2;
+    if (area <= bestArea) continue;
+    bestArea = area;
+    let a = 0;
+    let cx = 0;
+    let cy = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      const [x1, y1] = ring[i];
+      const [x2, y2] = ring[i + 1];
+      const f = x1 * y2 - x2 * y1;
+      a += f;
+      cx += (x1 + x2) * f;
+      cy += (y1 + y2) * f;
+    }
+    best = a === 0 ? null : [cx / (3 * a), cy / (3 * a)];
+  }
+  return best;
+}
+
+/** "▲ +4,2 %" / "▼ −1,8 %" HTML span with direction color. */
+function evoHtml(pct: number, prevYear: string): string {
+  const up = pct > 0;
+  const color = up ? "#16a34a" : pct < 0 ? "#dc2626" : "#64748b";
+  const arrow = up ? "▲" : pct < 0 ? "▼" : "•";
+  const sign = pct > 0 ? "+" : "";
+  const val = pct.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+  return `<span style="color:${color};font-weight:700">${arrow} ${sign}${val} %</span> <span style="color:#94a3b8">(vs ${prevYear})</span>`;
 }
 
 function escapeHtml(s: string): string {
@@ -135,6 +182,7 @@ export default function MapPanel({
   keyField,
   nameField,
   geoStamp,
+  evo,
 }: Props) {
   const activeDef = def ?? defOf(active);
   const geoKey = `${side}-${keyField}-${geoStamp}-${active}-${thresholds.join(",")}-${selected ?? ""}`;
@@ -181,13 +229,43 @@ export default function MapPanel({
           const id = feature.properties[keyField];
           const name = feature.properties[nameField] ?? id;
           const v = valueOf(id as string);
+          const pct = evo ? evo.map[id as string] : undefined;
+          const evoLine =
+            pct === undefined || !evo
+              ? ""
+              : `<br/>${evoHtml(pct, evo.prevYear)}`;
           layer.bindTooltip(
-            `<b>${escapeHtml(String(name))}</b><br/>${escapeHtml(activeDef.label)} : ${fmt(v, activeDef.unit, activeDef.decimals ?? 0)} <span style="color:#94a3b8">(${activeDef.year})</span>`,
+            `<b>${escapeHtml(String(name))}</b><br/>${escapeHtml(activeDef.label)} : ${fmt(v, activeDef.unit, activeDef.decimals ?? 0)} <span style="color:#94a3b8">(${activeDef.year})</span>${evoLine}`,
             { sticky: true, className: "lux-tooltip" },
           );
           layer.on("click", () => onSelect(id as string));
         }}
       />
+      {evo &&
+        geo.features.map((f) => {
+          const id = f.properties[keyField] as string;
+          const pct = evo.map[id];
+          if (pct === undefined) return null;
+          const c = polygonCentroid(f.geometry as { type: string; coordinates: unknown });
+          if (!c) return null;
+          const up = pct > 0;
+          const color = up ? "#16a34a" : pct < 0 ? "#dc2626" : "#64748b";
+          const arrow = up ? "▲" : pct < 0 ? "▼" : "•";
+          const sign = pct > 0 ? "+" : "";
+          const label = `${arrow} ${sign}${pct.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
+          return (
+            <Marker
+              key={`evo-${geoStamp}-${id}`}
+              position={c}
+              interactive={false}
+              icon={L.divIcon({
+                className: "lux-evo",
+                html: `<span style="color:${color}">${label}</span>`,
+                iconSize: [0, 0],
+              })}
+            />
+          );
+        })}
       {syncEnabled && <SyncController sync={sync} side={side} onSync={onSync} />}
     </MapContainer>
   );

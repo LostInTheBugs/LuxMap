@@ -41,8 +41,10 @@ export default function App() {
   const [data] = useState<CommuneData[]>(indicatorsData as CommuneData[]);
   const [geo, setGeo] = useState<GeoData | null>(null);
   const geoStamp = useRef(0);
-  const applyGeo = useCallback((g: GeoData) => {
+  const [geoFor, setGeoFor] = useState<AggMode>("none");
+  const applyGeo = useCallback((g: GeoData, mode: AggMode) => {
     geoStamp.current += 1;
+    setGeoFor(mode);
     setGeo(g);
   }, []);
   const [mode, setMode] = useState<ViewMode>("simple");
@@ -60,6 +62,7 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    const mode = aggMode;
     const url =
       aggMode === "canton"
         ? "/cantons.geojson"
@@ -69,7 +72,7 @@ export default function App() {
     fetch(url)
       .then((r) => r.json())
       .then((g) => {
-        if (!cancelled) applyGeo(g as GeoData);
+        if (!cancelled) applyGeo(g as GeoData, mode);
       });
     return () => {
       cancelled = true;
@@ -308,6 +311,40 @@ export default function App() {
     [aggMode, aggDefs, baseValueOfB],
   );
 
+  // --- year-over-year % evolution per group (selected year vs previous year) ---
+  const evoA = useMemo<{ map: Record<string, number>; prevYear: string } | null>(() => {
+    if (aggMode === "none" || yearsA.length < 2) return null;
+    const curYear = currentYearA ?? yearsA[yearsA.length - 1];
+    const idx = yearsA.indexOf(curYear);
+    if (idx <= 0) return null; // first year of the series: nothing to compare
+    const prevYear = yearsA[idx - 1];
+    const cur = aggDefs((lau2) => (seriesData as SeriesData)[active]?.[curYear]?.[lau2]);
+    const prev = aggDefs((lau2) => (seriesData as SeriesData)[active]?.[prevYear]?.[lau2]);
+    const map: Record<string, number> = {};
+    for (const [g, v] of Object.entries(cur)) {
+      const p = prev[g];
+      if (p === undefined || p === 0) continue;
+      map[g] = ((v - p) / p) * 100;
+    }
+    return { map, prevYear };
+  }, [aggMode, yearsA, currentYearA, aggDefs, active]);
+  const evoB = useMemo<{ map: Record<string, number>; prevYear: string } | null>(() => {
+    if (aggMode === "none" || yearsB.length < 2) return null;
+    const curYear = currentYearB ?? yearsB[yearsB.length - 1];
+    const idx = yearsB.indexOf(curYear);
+    if (idx <= 0) return null;
+    const prevYear = yearsB[idx - 1];
+    const cur = aggDefs((lau2) => (seriesData as SeriesData)[activeB]?.[curYear]?.[lau2]);
+    const prev = aggDefs((lau2) => (seriesData as SeriesData)[activeB]?.[prevYear]?.[lau2]);
+    const map: Record<string, number> = {};
+    for (const [g, v] of Object.entries(cur)) {
+      const p = prev[g];
+      if (p === undefined || p === 0) continue;
+      map[g] = ((v - p) / p) * 100;
+    }
+    return { map, prevYear };
+  }, [aggMode, yearsB, currentYearB, aggDefs, activeB]);
+
   // geometry key/name fields + aggregate-aware valueOf for the maps
   const keyField = aggMode === "canton" ? "CANTON" : aggMode === "circonscription" ? "CIRCONSCRIPTION" : "LAU2";
   const nameField = aggMode === "canton" ? "CANTON" : aggMode === "circonscription" ? "CIRCONSCRIPTION" : "COMMUNE";
@@ -393,6 +430,7 @@ export default function App() {
               keyField={keyField}
               nameField={nameField}
               geoStamp={geoStamp.current}
+              evo={aggMode !== "none" && geoFor === aggMode ? evoA : null}
             />
           )}
           <ColorLegend side={mode === "dual" ? "A" : undefined} thresholds={mapAThresholds} def={legendA} />
@@ -424,6 +462,7 @@ export default function App() {
                 keyField={keyField}
                 nameField={nameField}
                 geoStamp={geoStamp.current}
+                evo={aggMode !== "none" && geoFor === aggMode ? evoB : null}
               />
             )}
             <ColorLegend side="B" thresholds={mapBThresholds} def={mapBDef} />
@@ -517,6 +556,26 @@ export default function App() {
                   : `${aggregatesA[selected].toLocaleString("fr-FR", { maximumFractionDigits: def.decimals ?? 0 })} ${def.unit}`}
               </b>
             </div>
+            {evoA && evoA.map[selected] !== undefined && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 14,
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  borderTop: "1px solid #334155",
+                  marginTop: 4,
+                  paddingTop: 4,
+                }}
+              >
+                <span style={{ color: "#cbd5e1" }}>Évolution vs {evoA.prevYear}</span>
+                <b style={{ color: evoA.map[selected] >= 0 ? "#4ade80" : "#f87171" }}>
+                  {evoA.map[selected] >= 0 ? "▲ +" : "▼ "}
+                  {evoA.map[selected].toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %
+                </b>
+              </div>
+            )}
             <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
               Cliquez ailleurs pour quitter
             </div>

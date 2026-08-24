@@ -2,6 +2,16 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.018] — 2026-08-24
+
+### Added
+- **Year-over-year % evolution on canton/circonscription maps**: a label at
+  each group's centroid shows the change of the selected year vs the previous
+  year of the series — green ▲ when it rises, red ▼ when it falls (also in
+  the tooltip and the click detail panel). Works with the year slider
+  (e.g. Diekirch unemployment: 2024 vs 2023 ▲ +11,7 %); hidden for
+  indicators without a series or on the first year of a series
+
 ## [2026.08.016-c1] — 2026-08-24
 
 ### Fixed

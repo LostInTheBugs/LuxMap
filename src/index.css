@@ -29,6 +29,19 @@ body,
   display: none;
 }
 
+.lux-evo {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 .leaflet-popup-content-wrapper {
   border-radius: 10px;
   font-family: system-ui, sans-serif;
