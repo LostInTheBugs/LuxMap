@@ -41,8 +41,8 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      fetch("/indicators.json").then((r) => r.json()),
-      fetch("/series.json").then((r) => r.json()),
+      fetch("/indicators.json", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/series.json", { cache: "no-store" }).then((r) => r.json()),
     ]).then(([indicators, series]) => {
       if (cancelled) return;
       setData(indicators as CommuneData[]);
