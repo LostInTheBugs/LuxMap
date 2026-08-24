@@ -53,12 +53,12 @@ export default function App() {
     };
   }, []);
   const [geo, setGeo] = useState<GeoData | null>(null);
-  const geoStamp = useRef(0);
+  const [geoStamp, setGeoStamp] = useState(0);
   const [geoFor, setGeoFor] = useState<AggMode>("none");
   const applyGeo = useCallback((g: GeoData, mode: AggMode) => {
-    geoStamp.current += 1;
     setGeoFor(mode);
     setGeo(g);
+    setGeoStamp((s) => s + 1);
   }, []);
   const [mode, setMode] = useState<ViewMode>("simple");
   const [active, setActive] = useState<IndicatorKey>("density");
@@ -90,7 +90,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [aggMode]);
+  }, [aggMode, applyGeo]);
 
   const byLau2 = useMemo(() => {
     const m = new Map<string, CommuneData>();
@@ -185,8 +185,11 @@ export default function App() {
   useEffect(() => {
     if (!syncYears || mode !== "dual" || commonYears.length === 0) return;
     const y = yearA && commonYears.includes(yearA) ? yearA : commonYears[commonYears.length - 1];
-    if (yearA !== y) setYearA(y);
-    if (yearB !== y) setYearB(y);
+    const id = requestAnimationFrame(() => {
+      if (yearA !== y) setYearA(y);
+      if (yearB !== y) setYearB(y);
+    });
+    return () => cancelAnimationFrame(id);
   }, [syncYears, mode, commonYears, yearA, yearB]);
 
   const handleYearA = useCallback(
@@ -259,8 +262,11 @@ export default function App() {
   // Mobile: Simple mode only (Comparer/Ratio/PNG are desktop features)
   useEffect(() => {
     if (isMobile && mode !== "simple") {
-      setMode("simple");
-      setSync(null);
+      const id = requestAnimationFrame(() => {
+        setMode("simple");
+        setSync(null);
+      });
+      return () => cancelAnimationFrame(id);
     }
   }, [isMobile, mode]);
 
@@ -451,7 +457,7 @@ export default function App() {
               refitKey={refitKey}
               keyField={keyField}
               nameField={nameField}
-              geoStamp={geoStamp.current}
+              geoStamp={geoStamp}
               evo={aggMode !== "none" && geoFor === aggMode ? evoA : null}
             />
           )}
@@ -483,7 +489,7 @@ export default function App() {
                 refitKey={refitKey}
                 keyField={keyField}
                 nameField={nameField}
-                geoStamp={geoStamp.current}
+                geoStamp={geoStamp}
                 evo={aggMode !== "none" && geoFor === aggMode ? evoB : null}
               />
             )}
