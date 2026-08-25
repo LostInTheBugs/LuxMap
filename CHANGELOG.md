@@ -26,7 +26,7 @@ All notable changes to LuxMap are documented in this file.
   disclaimer and in the control panel, persisted in localStorage
 - Release workflow supports `-pre` tags (prerelease GitHub releases)
 
-## [2026.08.023-pre] — 2026-08-24
+## [2026.08.023] — 2026-08-24
 
 ### Added
 - **Natural balance** indicator (STATEC LUSTAT DF_X024, variable A03): births
