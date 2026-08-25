@@ -2,6 +2,34 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.027] — 2026-08-25
+
+### Corrections
+- ETL : `latest()` renvoyait l'année au lieu de la valeur — population,
+  accidents, excédent naturel et solde migratoire valaient « 2025 » / « 2026 »
+  sur les 100 communes. Visible depuis la 026 dans le panneau de détail, et
+  faussant les rapports du mode Ratio
+- Agrégation par canton/circonscription : les effectifs (population, excédent
+  naturel, solde migratoire) sont désormais **sommés** et non médianés — le
+  canton de Luxembourg affichait 7 161 habitants au lieu de 213 766
+- Le luxembourgeois est reconnu à la détection automatique de langue
+- Accès à `localStorage` protégés : plus de page blanche quand le stockage du
+  navigateur est bloqué
+- `translate()` remplace toutes les occurrences d'une variable, pas seulement
+  la première
+
+### Tests
+- Validation de `public/indicators.json` : types, effectifs, plausibilité de la
+  population totale
+- `aggregate()` extrait dans `utils/logic.ts` et couvert, y compris le
+  garde-fou sur les indicateurs additifs
+- `detectLang()` testé sur les cinq langues et sur une langue inconnue
+- Interpolation multiple dans `translate()`
+
+### Divers
+- Tags et releases GitHub rattrapés pour 2026.08.021, .022 et .023
+- Numéro de version `2026.08.023-pre` régularisé en `2026.08.023`
+
 ## [2026.08.026] — 2026-08-25
 
 ### Added
