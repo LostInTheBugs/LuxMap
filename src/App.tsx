@@ -9,6 +9,7 @@ import { LangProvider, useLang } from "./i18n";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { CIRCONSCRIPTIONS, type AggMode, type AggStat, type CommuneData, type IndicatorDef, type IndicatorKey, type SeriesData, type ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
+import { INDICATOR_ROWS, median } from "./utils/logic";
 
 interface GeoData {
   type: "FeatureCollection";
@@ -28,12 +29,6 @@ export interface SyncState {
   from: string;
   center: L.LatLng;
   zoom: number;
-}
-
-/** Median of a sorted numeric array. */
-function median(sorted: number[]): number {
-  const n = sorted.length;
-  return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
 }
 
 function Main() {
@@ -702,14 +697,3 @@ export default function App() {
     </LangProvider>
   );
 }
-
-const INDICATOR_ROWS: [IndicatorKey, string, string][] = [
-  ["density", "density", "hab/km²"],
-  ["chomage", "chomage", "%"],
-  ["o3_days", "o3_days", "j"],
-  ["age_median", "age_median", "ans"],
-  ["etrangers", "etrangers", "%"],
-  ["loyer_appart", "loyer_appart", "€/m²/mois"],
-  ["prix_appart", "prix_appart", "€/m²"],
-  ["prix_maison", "prix_maison", "€/m²"],
-];

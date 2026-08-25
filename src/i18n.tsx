@@ -82,7 +82,11 @@ const fr = {
   "ind.prix_appart": "Prix annoncés — appartements",
   "ind.prix_maison": "Prix annoncés — maisons",
   "row.density": "Densité",
+  "row.population": "Population",
+  "row.solde_naturel": "Excédent naturel",
+  "row.solde_migratoire": "Solde migratoire",
   "row.chomage": "Chômage",
+  "row.accidents": "Accidents",
   "row.o3_days": "Jours O₃",
   "row.age_median": "Âge médian",
   "row.etrangers": "Étrangers",
@@ -201,7 +205,11 @@ const en = {
   "ind.prix_appart": "Advertised prices — apartments",
   "ind.prix_maison": "Advertised prices — houses",
   "row.density": "Density",
+  "row.population": "Population",
+  "row.solde_naturel": "Natural balance",
+  "row.solde_migratoire": "Net migration",
   "row.chomage": "Unemployment",
+  "row.accidents": "Accidents",
   "row.o3_days": "O₃ days",
   "row.age_median": "Median age",
   "row.etrangers": "Foreigners",
@@ -317,7 +325,11 @@ const de = {
   "ind.prix_appart": "Angebotene Preise — Wohnungen",
   "ind.prix_maison": "Angebotene Preise — Häuser",
   "row.density": "Dichte",
+  "row.population": "Bevölkerung",
+  "row.solde_naturel": "Natürlicher Saldo",
+  "row.solde_migratoire": "Wanderungssaldo",
   "row.chomage": "Arbeitslosigkeit",
+  "row.accidents": "Unfälle",
   "row.o3_days": "O₃-Tage",
   "row.age_median": "Medianalter",
   "row.etrangers": "Ausländer",
@@ -433,7 +445,11 @@ const pt = {
   "ind.prix_appart": "Preços anunciados — apartamentos",
   "ind.prix_maison": "Preços anunciados — casas",
   "row.density": "Densidade",
+  "row.population": "População",
+  "row.solde_naturel": "Saldo natural",
+  "row.solde_migratoire": "Saldo migratório",
   "row.chomage": "Desemprego",
+  "row.accidents": "Acidentes",
   "row.o3_days": "Dias O₃",
   "row.age_median": "Idade mediana",
   "row.etrangers": "Estrangeiros",
@@ -549,7 +565,11 @@ const lb = {
   "ind.prix_appart": "Ugebueden Präisser — Appartementer",
   "ind.prix_maison": "Ugebueden Präisser — Haiser",
   "row.density": "Dicht",
+  "row.population": "Bevëlkerung",
+  "row.solde_naturel": "Natierleche Saldo",
+  "row.solde_migratoire": "Migrationssaldo",
   "row.chomage": "Aarbechtslosegkeet",
+  "row.accidents": "Accidenten",
   "row.o3_days": "O₃ Deeg",
   "row.age_median": "Medianalter",
   "row.etrangers": "Auslänner",
@@ -596,6 +616,9 @@ const lb = {
 
 const STRINGS: Record<Lang, Dict> = { fr: fr as Dict, en, de, pt, lb };
 
+/** All translation keys per language (exposed for tests and tooling). */
+export const STRINGS_ALL = STRINGS;
+
 export function detectLang(): Lang {
   const l = (typeof navigator !== "undefined" ? navigator.language : "fr").toLowerCase().slice(0, 2);
   return (["fr", "en", "de", "pt"] as Lang[]).includes(l as Lang) ? (l as Lang) : "fr";
@@ -605,6 +628,25 @@ export const localeOf = (lang: Lang): string =>
   ({ fr: "fr-FR", en: "en-GB", de: "de-DE", pt: "pt-PT", lb: "fr-LU" })[lang];
 
 type Vars = Record<string, string | number>;
+
+/** Pure translation: key → string for a language (fallback: French, then key). */
+export function translate(lang: Lang, key: string, vars?: Vars): string {
+  let s = STRINGS[lang][key] ?? STRINGS.fr[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
+  }
+  return s;
+}
+
+/** Translated label of an indicator (fallback: French label). */
+export function indLabelFor(lang: Lang, key: string): string {
+  return STRINGS[lang][`ind.${key}`] ?? STRINGS.fr[`ind.${key}`] ?? defOf(key as never).label;
+}
+
+/** Translated unit (fallback: the French unit string). */
+export function indUnitFor(lang: Lang, unitFr: string): string {
+  return STRINGS[lang][`unit.${unitFr}`] ?? STRINGS.fr[`unit.${unitFr}`] ?? unitFr;
+}
 
 interface LangCtxValue {
   lang: Lang;
@@ -630,21 +672,15 @@ export function LangProvider({ children }: { children: ReactNode }) {
     setLangState(l);
   }, []);
   const t = useCallback(
-    (key: string, vars?: Vars) => {
-      let s = STRINGS[lang][key] ?? STRINGS.fr[key] ?? key;
-      if (vars) {
-        for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
-      }
-      return s;
-    },
+    (key: string, vars?: Vars) => translate(lang, key, vars),
     [lang],
   );
   const indLabel = useCallback(
-    (key: string) => STRINGS[lang][`ind.${key}`] ?? STRINGS.fr[`ind.${key}`] ?? defOf(key as never).label,
+    (key: string) => indLabelFor(lang, key),
     [lang],
   );
   const indUnit = useCallback(
-    (unitFr: string) => STRINGS[lang][`unit.${unitFr}`] ?? STRINGS.fr[`unit.${unitFr}`] ?? unitFr,
+    (unitFr: string) => indUnitFor(lang, unitFr),
     [lang],
   );
   const value: LangCtxValue = useMemo(
