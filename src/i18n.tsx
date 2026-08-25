@@ -650,7 +650,7 @@ type Vars = Record<string, string | number>;
 export function translate(lang: Lang, key: string, vars?: Vars): string {
   let s = STRINGS[lang][key] ?? STRINGS.fr[key] ?? key;
   if (vars) {
-    for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
+    for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(String(v));
   }
   return s;
 }

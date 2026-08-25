@@ -48,6 +48,18 @@ describe("i18n dictionaries", () => {
     );
   });
 
+  it("replaces every occurrence of a variable, not just the first", () => {
+    const dict = STRINGS_ALL.fr as Record<string, string>;
+    const saved = dict["test.repeat"];
+    dict["test.repeat"] = "{year} → {year}";
+    try {
+      expect(translate("fr", "test.repeat", { year: 2026 })).toBe("2026 → 2026");
+    } finally {
+      if (saved === undefined) delete dict["test.repeat"];
+      else dict["test.repeat"] = saved;
+    }
+  });
+
   it("detects every supported language from navigator", () => {
     const desc = Object.getOwnPropertyDescriptor(globalThis, "navigator");
     try {
