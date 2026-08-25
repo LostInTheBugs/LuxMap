@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy LuxMap on serveur-prod (Traefik front, Cloudflare TLS edge).
+# Deploy LuxMap on the production server (Traefik front, Cloudflare TLS edge).
 # Run from the repo root: sudo bash deploy.sh
 set -euo pipefail
 cd "$(dirname "$0")"

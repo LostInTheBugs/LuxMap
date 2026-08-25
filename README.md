@@ -70,7 +70,7 @@ npm run dev
 ## Deployment
 
 Docker multi-stage build (node → nginx), reverse-proxied by Cloudflare
-(proxied DNS record `luxmap.cloudfr.net` → serveur-prod).
+(proxied DNS record `luxmap.cloudfr.net`).
 
 ```bash
 docker build -t luxmap .

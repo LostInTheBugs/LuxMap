@@ -233,7 +233,7 @@ All notable changes to LuxMap are documented in this file.
   apartment prices), with A/B indicator selects, dedicated legend and a
   "Ratio A/B" row in the detail panel
 - Mode selector (Simple / Comparer / Ratio) in the control panel
-- `deploy.sh` — one-command redeploy on serveur-prod (Traefik labels included)
+- `deploy.sh` — one-command redeploy on the production server (Traefik labels included)
 
 ## [2026.08.002-c1] — 2026-08-23
 
@@ -249,7 +249,7 @@ All notable changes to LuxMap are documented in this file.
   interpolation from 53 Greater-Region stations to commune centroids (100/100)
 - Dual-map comparison mode: two synchronized maps (pan/zoom sync), one
   indicator each, stacked on mobile
-- First stable release, deployed to production (serveur-prod + Cloudflare)
+- First stable release, deployed to production (Cloudflare + Traefik)
 
 ## [2026.08.001] — 2026-08-23
 
