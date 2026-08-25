@@ -31,6 +31,7 @@ interface Props {
   onAggMode: (m: AggMode) => void;
   aggStat: AggStat;
   onAggStat: (s: AggStat) => void;
+  statLocked: boolean;
   unitLabel: string;
   unitCount: number;
   /** Mobile layout: bottom sheet, Simple mode only, no PNG export. */
@@ -91,6 +92,7 @@ export default function ControlPanel({
   onAggMode,
   aggStat,
   onAggStat,
+  statLocked,
   unitLabel,
   unitCount,
   mobile,
@@ -435,13 +437,21 @@ export default function ControlPanel({
             <option value="circonscription">{t("agg.circs")}</option>
           </select>
           <select
-            value={aggStat}
+            value={statLocked ? "sum" : aggStat}
+            disabled={statLocked}
             onChange={(e) => onAggStat(e.target.value as AggStat)}
             aria-label={t("agg.stat")}
+            title={statLocked ? t("agg.sumForced") : t("agg.stat")}
             style={selStyle}
           >
-            <option value="median">{t("agg.median")}</option>
-            <option value="mean">{t("agg.mean")}</option>
+            {statLocked ? (
+              <option value="sum">{t("agg.sum")}</option>
+            ) : (
+              <>
+                <option value="median">{t("agg.median")}</option>
+                <option value="mean">{t("agg.mean")}</option>
+              </>
+            )}
           </select>
         </div>
       )}

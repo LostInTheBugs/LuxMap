@@ -9,7 +9,7 @@ import { LangProvider, useLang } from "./i18n";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { CIRCONSCRIPTIONS, type AggMode, type AggStat, type CommuneData, type IndicatorDef, type IndicatorKey, type SeriesData, type ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
-import { INDICATOR_ROWS, median } from "./utils/logic";
+import { INDICATOR_ROWS, aggregate } from "./utils/logic";
 
 interface GeoData {
   type: "FeatureCollection";
@@ -310,7 +310,7 @@ function Main() {
     [aggMode],
   );
   const aggDefs = useCallback(
-    (valueOf: (lau2: string) => number | undefined): Record<string, number> => {
+    (valueOf: (lau2: string) => number | undefined, additive: boolean): Record<string, number> => {
       const groups = new Map<string, number[]>();
       for (const row of data) {
         const v = valueOf(row.lau2);
@@ -320,10 +320,7 @@ function Main() {
         groups.get(g)!.push(v);
       }
       const out: Record<string, number> = {};
-      for (const [g, vs] of groups) {
-        vs.sort((a, b) => a - b);
-        out[g] = aggStat === "median" ? median(vs) : vs.reduce((a, b) => a + b, 0) / vs.length;
-      }
+      for (const [g, vs] of groups) out[g] = aggregate(vs, additive, aggStat);
       return out;
     },
     [data, groupKeyOf, aggStat],
@@ -332,12 +329,12 @@ function Main() {
   const baseValueOfA = currentYearA ? yearlyValueOfA : valueOfA;
   const baseValueOfB = currentYearB ? yearlyValueOfB : valueOfB;
   const aggregatesA = useMemo(
-    () => (aggMode !== "none" ? aggDefs(baseValueOfA) : null),
-    [aggMode, aggDefs, baseValueOfA],
+    () => (aggMode !== "none" ? aggDefs(baseValueOfA, def.additive ?? false) : null),
+    [aggMode, aggDefs, baseValueOfA, def],
   );
   const aggregatesB = useMemo(
-    () => (aggMode !== "none" ? aggDefs(baseValueOfB) : null),
-    [aggMode, aggDefs, baseValueOfB],
+    () => (aggMode !== "none" ? aggDefs(baseValueOfB, defB.additive ?? false) : null),
+    [aggMode, aggDefs, baseValueOfB, defB],
   );
 
   // --- year-over-year % evolution per group (selected year vs previous year) ---
@@ -347,8 +344,8 @@ function Main() {
     const idx = yearsA.indexOf(curYear);
     if (idx <= 0) return null; // first year of the series: nothing to compare
     const prevYear = yearsA[idx - 1];
-    const cur = aggDefs((lau2) => seriesData[active]?.[curYear]?.[lau2]);
-    const prev = aggDefs((lau2) => seriesData[active]?.[prevYear]?.[lau2]);
+    const cur = aggDefs((lau2) => seriesData[active]?.[curYear]?.[lau2], def.additive ?? false);
+    const prev = aggDefs((lau2) => seriesData[active]?.[prevYear]?.[lau2], def.additive ?? false);
     const map: Record<string, number> = {};
     for (const [g, v] of Object.entries(cur)) {
       const p = prev[g];
@@ -363,8 +360,8 @@ function Main() {
     const idx = yearsB.indexOf(curYear);
     if (idx <= 0) return null;
     const prevYear = yearsB[idx - 1];
-    const cur = aggDefs((lau2) => seriesData[activeB]?.[curYear]?.[lau2]);
-    const prev = aggDefs((lau2) => seriesData[activeB]?.[prevYear]?.[lau2]);
+    const cur = aggDefs((lau2) => seriesData[activeB]?.[curYear]?.[lau2], defB.additive ?? false);
+    const prev = aggDefs((lau2) => seriesData[activeB]?.[prevYear]?.[lau2], defB.additive ?? false);
     const map: Record<string, number> = {};
     for (const [g, v] of Object.entries(cur)) {
       const p = prev[g];
@@ -526,6 +523,7 @@ function Main() {
         onAggMode={setAggMode}
         aggStat={aggStat}
         onAggStat={setAggStat}
+        statLocked={def.additive ?? false}
         unitLabel={unitLabel}
         unitCount={unitCount}
         mobile={isMobile}
@@ -578,7 +576,7 @@ function Main() {
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
               {selected}
               <span style={{ fontWeight: 400, color: "#94a3b8", marginLeft: 6, fontSize: 12 }}>
-                {t(aggStat === "median" ? "detail.median" : "detail.mean")} · {t(aggMode === "canton" ? "detail.canton" : "detail.circ")}
+                {def.additive ? t("detail.sum") : t(aggStat === "median" ? "detail.median" : "detail.mean")} · {t(aggMode === "canton" ? "detail.canton" : "detail.circ")}
               </span>
             </div>
             <div

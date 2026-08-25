@@ -62,4 +62,8 @@ export interface IndicatorDef {
   year: string;
   source: string;
   decimals?: number;
+  /** true = effectif (population, soldes) : seule la somme a un sens en
+   *  agrégation par canton. false/absent = intensité (taux, prix, âge, densité,
+   *  et accidents dont la valeur cantonale est répliquée sur les communes). */
+  additive?: boolean;
 }

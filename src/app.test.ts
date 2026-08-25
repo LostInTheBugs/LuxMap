@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { INDICATORS } from "./utils/scale";
 import { LANGS, STRINGS_ALL, detectLang, indLabelFor, indUnitFor, localeOf, translate } from "./i18n";
 import { CIRCONSCRIPTIONS } from "./types";
-import { INDICATOR_ROWS, median } from "./utils/logic";
+import { INDICATOR_ROWS, aggregate, median } from "./utils/logic";
 
 const LANGS_ALL = LANGS.map((l) => l.code);
 
@@ -113,6 +113,27 @@ describe("median", () => {
   it("works on sorted arrays only (documented contract)", () => {
     expect(median([5])).toBe(5);
     expect(median([2, 4])).toBe(3);
+  });
+});
+
+describe("aggregate", () => {
+  it("sums additive indicators regardless of the selected stat", () => {
+    expect(aggregate([100, 200, 700], true, "median")).toBe(1000);
+    expect(aggregate([100, 200, 700], true, "mean")).toBe(1000);
+  });
+
+  it("uses median or mean for intensive indicators", () => {
+    expect(aggregate([100, 200, 700], false, "median")).toBe(200);
+    expect(aggregate([100, 200, 600], false, "mean")).toBe(300);
+  });
+
+  it("does not depend on input order", () => {
+    expect(aggregate([700, 100, 200], false, "median")).toBe(200);
+  });
+
+  it("marks exactly the three count indicators as additive", () => {
+    const additive = INDICATORS.filter((d) => d.additive).map((d) => d.key).sort();
+    expect(additive).toEqual(["population", "solde_migratoire", "solde_naturel"]);
   });
 });
 

@@ -1,9 +1,22 @@
-import type { IndicatorKey } from "../types";
+import type { AggStat, IndicatorKey } from "../types";
 
 /** Median of a sorted numeric array. */
 export function median(sorted: number[]): number {
   const n = sorted.length;
   return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+}
+
+/**
+ * Agrège les valeurs d'un groupe de communes.
+ * @param values valeurs des communes du groupe qui ont une donnée
+ * @param additive true pour un effectif (somme), false pour une intensité
+ * @param stat statistique appliquée aux intensités uniquement
+ */
+export function aggregate(values: number[], additive: boolean, stat: AggStat): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const sum = sorted.reduce((a, b) => a + b, 0);
+  if (additive) return sum;
+  return stat === "median" ? median(sorted) : sum / sorted.length;
 }
 
 /** Short rows of the commune detail panel: [indicator, i18n row.* key, French unit]. */

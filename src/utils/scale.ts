@@ -27,6 +27,7 @@ export const INDICATORS: IndicatorDef[] = [
     year: "2026",
     source: "STATEC",
     decimals: 0,
+    additive: true,
   },
   {
     key: "solde_naturel",
@@ -35,6 +36,7 @@ export const INDICATORS: IndicatorDef[] = [
     year: "2025",
     source: "STATEC",
     decimals: 0,
+    additive: true,
   },
   {
     key: "solde_migratoire",
@@ -43,6 +45,7 @@ export const INDICATORS: IndicatorDef[] = [
     year: "2025",
     source: "STATEC",
     decimals: 0,
+    additive: true,
   },
   {
     key: "chomage",
