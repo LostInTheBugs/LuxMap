@@ -126,6 +126,14 @@ def load_lustat2(name: str) -> dict[str, dict[str, float]]:
         return json.load(f)
 
 
+def latest(by_year: dict[str, float | None]) -> float | None:
+    """Valeur de l'année la plus récente pour laquelle une donnée existe."""
+    years = [y for y, v in by_year.items() if v is not None]
+    if not years:
+        return None
+    return by_year[max(years)]
+
+
 def main() -> None:
     with open(os.path.join(RAW, "limadmin.geojson"), encoding="utf-8") as f:
         gj = json.load(f)
@@ -148,7 +156,6 @@ def main() -> None:
     accidents = load_lustat2("accidents")
     natural = load_lustat2("natural")
     migration = load_lustat2("migration")
-    latest = lambda by_year: max(by_year, key=lambda y: (by_year[y] is not None, y))
     pop_latest = {lau2: latest(by_year) for lau2, by_year in population.items()}
     acc_latest = {lau2: latest(by_year) for lau2, by_year in accidents.items()}
     nat_latest = {lau2: latest(by_year) for lau2, by_year in natural.items()}
@@ -173,13 +180,13 @@ def main() -> None:
         etr = etrangers_by_norm.get(norm(name))
         if etr is not None:
             row["etrangers"] = round(etr, 1)
-        if lau2 in pop_latest:
+        if pop_latest.get(lau2) is not None:
             row["population"] = pop_latest[lau2]
-        if lau2 in acc_latest:
+        if acc_latest.get(lau2) is not None:
             row["accidents"] = acc_latest[lau2]
-        if lau2 in nat_latest:
+        if nat_latest.get(lau2) is not None:
             row["solde_naturel"] = nat_latest[lau2]
-        if lau2 in mig_latest:
+        if mig_latest.get(lau2) is not None:
             row["solde_migratoire"] = mig_latest[lau2]
         loyer = loyer_by_norm.get(norm(name))
         if loyer is not None:
