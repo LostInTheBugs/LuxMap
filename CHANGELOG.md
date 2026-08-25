@@ -2,6 +2,17 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.026] — 2026-08-25
+
+### Added
+- **Unit tests (Vitest)**: 32 tests covering the indicator catalogue,
+  choropleth thresholds/colors/number formatting, i18n dictionary parity across
+  the 5 languages, median aggregation, detail-panel completeness and electoral
+  circonscriptions; wired into CI (lint → test → build)
+- **Detail panel**: the commune detail panel now shows all 12 indicators
+  (previously 8 — Population, Accidents, Natural balance and Net migration
+  were missing)
+
 ## [2026.08.024] — 2026-08-24
 
 ### Added
