@@ -5,7 +5,7 @@ import ControlPanel from "./components/ControlPanel";
 import ColorLegend from "./components/ColorLegend";
 import InfoModal from "./components/InfoModal";
 import DisclaimerModal from "./components/DisclaimerModal";
-import { LangProvider, useLang } from "./i18n";
+import { LangProvider, safeGet, safeSet, useLang } from "./i18n";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import { CIRCONSCRIPTIONS, type AggMode, type AggStat, type CommuneData, type IndicatorDef, type IndicatorKey, type SeriesData, type ViewMode } from "./types";
 import { computeThresholds, defOf } from "./utils/scale";
@@ -67,7 +67,7 @@ function Main() {
   const [playing, setPlaying] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(
-    () => !localStorage.getItem("luxmap-poc-disclaimer"),
+    () => !safeGet("luxmap-poc-disclaimer"),
   );
   const [aggMode, setAggMode] = useState<AggMode>("none");
   const [aggStat, setAggStat] = useState<AggStat>("median");
@@ -533,7 +533,7 @@ function Main() {
       {showDisclaimer && (
         <DisclaimerModal
           onClose={() => {
-            localStorage.setItem("luxmap-poc-disclaimer", "1");
+            safeSet("luxmap-poc-disclaimer", "1");
             setShowDisclaimer(false);
           }}
         />

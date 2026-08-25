@@ -679,13 +679,30 @@ interface LangCtxValue {
 
 const LangCtx = createContext<LangCtxValue | null>(null);
 
+/** localStorage protégé : renvoie null / ne fait rien si l'accès est refusé. */
+export function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function safeSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* stockage indisponible : la préférence ne sera pas retenue, tant pis */
+  }
+}
+
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
-    const saved = localStorage.getItem("luxmap-lang") as Lang | null;
+    const saved = safeGet("luxmap-lang") as Lang | null;
     return saved && saved in STRINGS ? saved : detectLang();
   });
   const setLang = useCallback((l: Lang) => {
-    localStorage.setItem("luxmap-lang", l);
+    safeSet("luxmap-lang", l);
     setLangState(l);
   }, []);
   const t = useCallback(
