@@ -48,10 +48,25 @@ describe("i18n dictionaries", () => {
     );
   });
 
-  it("detects the language from navigator when available (Node ≥21 exposes it)", () => {
-    const detected = detectLang();
-    expect(LANGS_ALL).toContain(detected);
-    expect(typeof detected).toBe("string");
+  it("detects every supported language from navigator", () => {
+    const desc = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+    try {
+      for (const { code } of LANGS) {
+        Object.defineProperty(globalThis, "navigator", {
+          value: { language: `${code}-XX` },
+          configurable: true,
+        });
+        expect(detectLang(), code).toBe(code);
+      }
+      Object.defineProperty(globalThis, "navigator", {
+        value: { language: "zz-ZZ" },
+        configurable: true,
+      });
+      expect(detectLang()).toBe("fr");
+    } finally {
+      if (desc) Object.defineProperty(globalThis, "navigator", desc);
+      else delete (globalThis as { navigator?: unknown }).navigator;
+    }
   });
 
   it("falls back to French when navigator is unavailable", () => {

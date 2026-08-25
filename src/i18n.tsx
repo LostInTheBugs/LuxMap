@@ -635,8 +635,10 @@ const STRINGS: Record<Lang, Dict> = { fr: fr as Dict, en, de, pt, lb };
 export const STRINGS_ALL = STRINGS;
 
 export function detectLang(): Lang {
-  const l = (typeof navigator !== "undefined" ? navigator.language : "fr").toLowerCase().slice(0, 2);
-  return (["fr", "en", "de", "pt"] as Lang[]).includes(l as Lang) ? (l as Lang) : "fr";
+  const l = (typeof navigator !== "undefined" ? navigator.language : "fr")
+    .toLowerCase()
+    .slice(0, 2);
+  return LANGS.some((x) => x.code === l) ? (l as Lang) : "fr";
 }
 
 export const localeOf = (lang: Lang): string =>
