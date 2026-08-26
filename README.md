@@ -99,6 +99,19 @@ docker run -d -p ${PORT:-8008}:80 luxmap
 > Re-run `python3 data/scripts/shrink_geojson.py` after any regeneration of the
 > GeoJSON files in `public/` (rounds coordinates to 5 decimals and minifies).
 
+## Git history
+
+This repository's history must **never** be rewritten (`rebase` on pushed
+commits, `filter-branch`, `git push --force`).
+
+Rewriting changes every commit hash. Tags then point to orphaned commits and
+are removed from the remote, which destroys the corresponding GitHub Releases
+— that is, the source consumed by the update checker (`/releases/latest`).
+This happened in August 2026: every release prior to 2026.08.028 was lost.
+
+If sensitive data ever gets committed, discuss it before acting rather than
+rewriting history.
+
 ## License
 
 [MIT](LICENSE)
