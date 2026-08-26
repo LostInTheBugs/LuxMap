@@ -4,7 +4,7 @@ import { INDICATORS } from "../utils/scale";
 import { LANGS, useLang, type Lang } from "../i18n";
 import { useUpdateCheck, SELF_HOSTED } from "../useUpdateCheck";
 
-export const APP_VERSION = "2026.08.028";
+export const APP_VERSION = __APP_VERSION__;
 
 interface Props {
   mode: ViewMode;

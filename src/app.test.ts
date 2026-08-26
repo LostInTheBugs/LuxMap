@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { INDICATORS } from "./utils/scale";
 import { LANGS, STRINGS_ALL, detectLang, indLabelFor, indUnitFor, localeOf, translate } from "./i18n";
 import { CIRCONSCRIPTIONS } from "./types";
 import { INDICATOR_ROWS, aggregate, median } from "./utils/logic";
+import { APP_VERSION } from "./components/ControlPanel";
 
 const LANGS_ALL = LANGS.map((l) => l.code);
 
@@ -176,5 +178,25 @@ describe("CIRCONSCRIPTIONS", () => {
     expect(CIRCONSCRIPTIONS.Luxembourg).toBe("Centre");
     expect(CIRCONSCRIPTIONS.Diekirch).toBe("Nord");
     expect(CIRCONSCRIPTIONS.Remich).toBe("Est");
+  });
+});
+
+describe("version consistency", () => {
+  it("APP_VERSION matches the VERSION file", () => {
+    const fileVersion = readFileSync(new URL("../VERSION", import.meta.url), "utf-8").trim();
+    expect(APP_VERSION).toBe(fileVersion);
+  });
+
+  it("VERSION matches package.json", () => {
+    const fileVersion = readFileSync(new URL("../VERSION", import.meta.url), "utf-8").trim();
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+    expect(pkg.version).toBe(fileVersion);
+  });
+
+  it("VERSION matches the meta tag in index.html", () => {
+    const fileVersion = readFileSync(new URL("../VERSION", import.meta.url), "utf-8").trim();
+    const html = readFileSync(new URL("../index.html", import.meta.url), "utf-8");
+    const m = /<meta name="version" content="([^"]+)"/.exec(html);
+    expect(m?.[1]).toBe(fileVersion);
   });
 });
