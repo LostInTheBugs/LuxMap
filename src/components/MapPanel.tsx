@@ -171,6 +171,20 @@ function AutoSize() {
   return null;
 }
 
+/**
+ * Drops the "Leaflet" prefix from the attribution control — only the
+ * required "© OpenStreetMap" credit stays (data sources live in the ℹ️
+ * Sources button). @types/leaflet no longer exposes attributionPrefix on
+ * MapOptions, hence the instance call.
+ */
+function NoLeafletPrefix() {
+  const map = useMap();
+  useEffect(() => {
+    map.attributionControl?.setPrefix(false);
+  }, [map]);
+  return null;
+}
+
 /** Keeps two maps' pan/zoom in sync (moveend → shared state → setView on the other). */
 function SyncController({
   sync,
@@ -273,6 +287,7 @@ export default function MapPanel({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       />
+      <NoLeafletPrefix />
       <ZoomControl position="bottomright" />
       <RefitController bounds={BOUNDS} refitKey={refitKey} />
       <AutoSize />

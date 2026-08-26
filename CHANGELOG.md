@@ -2,6 +2,22 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.028] — 2026-08-26
+
+### Ajouts
+- Vérification de mise à jour : la version déployée est comparée à la dernière
+  release GitHub (`releases/latest`) — bouton « 🔄 Vérifier les mises à jour »,
+  auto-vérification limitée à 1/heure, et bandeau « Mise à jour disponible »
+  avec bouton « Mettre à jour » (rechargement de l'application)
+- Attribution de la carte réduite au strict nécessaire : le préfixe « Leaflet »
+  a été retiré, seul « © OpenStreetMap » reste affiché en bas à droite (le
+  bouton ℹ️ Sources référence déjà toutes les sources de données)
+
+### Tests
+- `compareVersions()` / `parseVersion()` / `isUpdateAvailable()` couverts
+  (ordre des releases, hotfix `-cX` au-dessus de sa release de base, tags
+  malformés traités comme égaux)
+
 ## [2026.08.027] — 2026-08-25
 
 ### Corrections

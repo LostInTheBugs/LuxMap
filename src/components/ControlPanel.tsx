@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { AggMode, AggStat, IndicatorKey, ViewMode } from "../types";
 import { INDICATORS } from "../utils/scale";
 import { LANGS, useLang, type Lang } from "../i18n";
+import { useUpdateCheck } from "../useUpdateCheck";
 
-export const APP_VERSION = "2026.08.027";
+export const APP_VERSION = "2026.08.028";
 
 interface Props {
   mode: ViewMode;
@@ -99,6 +100,7 @@ export default function ControlPanel({
 }: Props) {
   const [open, setOpen] = useState(false);
   const { t, lang, setLang, indLabel } = useLang();
+  const { status: updateStatus, check: checkUpdate } = useUpdateCheck(APP_VERSION);
   const langSel = (
     <select
       value={lang}
@@ -469,6 +471,68 @@ export default function ControlPanel({
           {t("count.units", { n: unitCount, units: unitLabel, m: withData })}
         </span>
         <span style={{ color: "#475569" }}>v{APP_VERSION}</span>
+      </div>
+
+      {updateStatus.state === "available" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 8,
+            padding: "6px 8px",
+            borderRadius: 8,
+            background: "#0f2e1d",
+            border: "1px solid #16a34a",
+            fontSize: 12,
+            color: "#bbf7d0",
+          }}
+        >
+          <span style={{ flex: 1 }}>
+            ⬆️ {t("update.available", { version: updateStatus.version })}
+          </span>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 6,
+              border: "none",
+              background: "#16a34a",
+              color: "#052e16",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("update.apply")}
+          </button>
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+        <button
+          onClick={() => checkUpdate(true)}
+          disabled={updateStatus.state === "checking"}
+          title={t("update.check")}
+          style={{
+            padding: "4px 8px",
+            borderRadius: 6,
+            border: "1px solid #334155",
+            background: "#1e293b",
+            color: "#cbd5e1",
+            fontSize: 11.5,
+            cursor: "pointer",
+          }}
+        >
+          {updateStatus.state === "checking" ? "⏳" : "🔄"}{" "}
+          {updateStatus.state === "checking" ? t("update.checking") : t("update.check")}
+        </button>
+        {updateStatus.state === "upToDate" && (
+          <span style={{ fontSize: 11.5, color: "#16a34a" }}>✓ {t("update.upToDate")}</span>
+        )}
+        {updateStatus.state === "error" && (
+          <span style={{ fontSize: 11.5, color: "#dc2626" }}>⚠️ {t("update.error")}</span>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
