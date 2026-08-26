@@ -2,6 +2,26 @@
 
 All notable changes to LuxMap are documented in this file.
 
+## [2026.08.029] — 2026-08-26
+
+### Modifications
+- La vérification de mise à jour (bandeau et bouton) est désormais réservée aux
+  instances auto-hébergées, activée au build par `VITE_SELF_HOSTED=1`. Sur le
+  site public, le visiteur ne pouvait de toute façon rien redéployer : le bouton
+  « Mettre à jour » se contentait de recharger la même version. Aucune requête
+  n'est plus émise vers l'API GitHub depuis le site public
+- `APP_VERSION` est injecté au build depuis le fichier `VERSION` au lieu d'être
+  recopié à la main dans `ControlPanel.tsx`
+
+### Tests
+- Cohérence du numéro de version entre `VERSION`, `package.json`, `index.html`
+  et `APP_VERSION`
+- Le drapeau `VITE_SELF_HOSTED` est bien inactif par défaut
+
+### Documentation
+- Politique de non-réécriture de l'historique Git, et rappel de l'incident
+  d'août 2026 (perte de toutes les releases antérieures à la 2026.08.028)
+
 ## [2026.08.028] — 2026-08-26
 
 ### Ajouts
