@@ -55,3 +55,10 @@ describe("isUpdateAvailable", () => {
     expect(isUpdateAvailable("2026.08.027", "2026.08.027-c1")).toBe(true);
   });
 });
+
+describe("SELF_HOSTED flag", () => {
+  it("is disabled unless VITE_SELF_HOSTED is exactly \"1\"", () => {
+    // Le site public ne doit jamais afficher la vérification de mise à jour.
+    expect(import.meta.env.VITE_SELF_HOSTED === "1").toBe(false);
+  });
+});

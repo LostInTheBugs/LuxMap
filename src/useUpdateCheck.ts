@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { safeGet, safeSet } from "./i18n";
 import { fetchLatestVersion, isUpdateAvailable } from "./utils/update";
 
+/** La vérification de mise à jour ne concerne que les instances
+ *  auto-hébergées : sur le site public, le visiteur ne peut rien redéployer.
+ *  Activée au build par VITE_SELF_HOSTED=1. */
+export const SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED === "1";
+
 export type UpdateStatus =
   | { state: "idle" }
   | { state: "checking" }
@@ -23,6 +28,7 @@ export function useUpdateCheck(currentVersion: string) {
 
   const check = useCallback(
     async (force = false) => {
+      if (!SELF_HOSTED) return;
       const last = Number(safeGet(LAST_CHECK_KEY) ?? 0);
       if (!force && Date.now() - last < AUTO_MIN_INTERVAL_MS) return;
       setStatus({ state: "checking" });
@@ -43,6 +49,7 @@ export function useUpdateCheck(currentVersion: string) {
 
   // Auto-check on mount, deferred via rAF (react-hooks/set-state-in-effect).
   useEffect(() => {
+    if (!SELF_HOSTED) return;
     const raf = requestAnimationFrame(() => void check());
     return () => cancelAnimationFrame(raf);
   }, [check]);

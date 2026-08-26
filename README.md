@@ -82,6 +82,7 @@ docker run -d -p ${PORT:-8008}:80 luxmap
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `8008` | Internal port exposed by the container |
+| `VITE_SELF_HOSTED` | *(empty)* | Shows the update check UI (self-hosted instances) |
 
 ## Project structure
 
